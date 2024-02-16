@@ -1,0 +1,246 @@
+dstat - Program to quickly gather and print directory statistics.
+
+Usage: dstat [OPTIONS]... [DIRECTORY]...
+where: OPTIONS are:
+       -r / --recursive
+
+
+/**
+ * Note non-standard github.com:likle/cargs.git
+ */
+#include "lib/dstat.h"
+#include <cargs.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+/**
+ * Comparison strings for not descending into ourselves.
+ */
+const char *CD = ".";
+const char *PD = "..";
+
+/**
+ * CArgs library struct with options and documentation.
+ */
+static struct cag_option options[] = {
+    {.identifier = 'r',
+     .access_letters = "r",
+     .access_name = "recursive",
+     .value_name = NULL,
+     .description = "Recurse down directories and include aggregated results."},
+
+    {.identifier = 'h',
+     .access_letters = "h",
+     .access_name = "help",
+     .description = "Prints this help message."}};
+
+/**
+ * Separate structure for passing selected options to functions.
+ */
+struct sel_opts opt = {
+    // Default values for sel_opts{}.
+    false, false, false, false, false, false,
+    "", ""
+};
+
+/**
+ * This structure holds the variables and pointers for adding dirent.h
+ * statistical entries.
+ */
+struct dir_ent de = {
+    // Default values for dir_ent{}.
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0,
+    {""}
+};
+
+/**
+ * Decides whether to add an `s` to indicate singular or plural on output
+ * strings. Takes an `int` of how many things in question and a pointer to
+ * `char` where a letter `s` will be populated or nulled.
+ */
+char *ss(int *cnt, char *s)
+{
+    switch(*(cnt)) {
+    case 1:
+        s = "";
+        break;
+    default:
+        s = "s";
+        break;
+    }
+
+    return s;
+}
+
+/**
+ * Test directory, identified by pointer to const char, prior to further action.
+ */
+bool dir_test(const char *dn)
+{
+    struct stat sb;
+
+    dprint("testing directory: %s ", dn);
+    if (stat(dn, &sb) == 0 && S_ISDIR(sb.st_mode)) {
+        dprint("%s", "TRUE");
+        return true;
+    }
+
+    dprint("%s", "FALSE");
+    return false;
+}
+
+/**
+ * Print statistics on each (tested) directory.
+ * Takes integer index value and struct pointer for stats.
+ */
+int get_dirstats(char *dir)
+{
+    DIR *dp;
+    dp = opendir(dir);
+    struct dirent *ep = readdir(dp);
+    char *dn_buf = malloc(sizeof(MAXPATHLEN));
+    dprint("entered get_dirstats('%s', %s, %i)", dir, ep->d_name, opt.rec);
+
+    if ( fchdir(ep->d_ino) ) {
+        getcwd(dn_buf, MAXPATHLEN);
+        dprint("getcwd(%s, %d)", dn_buf, MAXPATHLEN);
+    } else {
+        perror("failed to enter current directory");
+    }
+
+    if ( dp != NULL /*&& chdir(dir)*/ ) {
+        while ( (ep = readdir(dp)) ) {
+            dprint("ep = %hhu", ep->d_type);
+            switch(ep->d_type) {
+            case DT_BLK:  ++(de.d_blk); break;
+            case DT_CHR:  ++(de.d_chr); break;
+            case DT_DIR:  ++(de.d_dir); break;
+            case DT_LNK:  ++(de.d_lnk); break;
+            case DT_REG:  ++(de.d_reg); break;
+            case DT_WHT:  ++(de.d_wht); break;
+            case DT_FIFO: ++(de.d_fif); break;
+            case DT_SOCK: ++(de.d_sok); break;
+            default:      ++(de.d_unk); break;
+            }
+
+            if ( ep->d_type == DT_DIR && opt.rec == true &&
+                 strncmp(ep->d_name, CD, ep->d_namlen) != 0 &&
+                 strncmp(ep->d_name, PD, ep->d_namlen) != 0 ) {
+                dprint("strncmp(CD): %d, %s, %s, %d", strncmp(ep->d_name, CD, ep->d_namlen), ep->d_name, CD, ep->d_namlen);
+                dprint("strncmp(PD): %d, %s, %s, %d", strncmp(ep->d_name, PD, ep->d_namlen), ep->d_name, PD, ep->d_namlen);
+                dprint("rec: de.dn[0]: %s, ep->d_name: %s", de.dn[0], ep->d_name);
+                //de.dn[0] = ep->d_name;
+                dprint("calling: get_dirstats(%s, %s, %i)", ep->d_name, de.dn[0], opt.rec);
+                get_dirstats(ep->d_name);
+            }
+        }
+    } else {
+        perror(dir);
+    }
+
+    free(dn_buf);
+    return EXIT_SUCCESS;
+}
+
+/**
+ * Takes the number of input directories, a pointer to the list of
+ * directories, and the directory entry statistics structure and
+ * collates the statistics into a single output block.
+ */
+int collate_output()
+{
+    int idx = 0;
+
+    for ( idx = 0 ; idx < de.lim ; idx++ ) {
+        dprint("de.lim %d, idx %2d: %s", de.lim, idx, de.dn[idx]);
+        get_dirstats(de.dn[idx]);
+        dprint("de.lim %d, idx %2d: %s", de.lim, idx, de.dn[idx]);
+    }
+
+    char *s = malloc(sizeof(char) + 1);
+    dprint("idx: %d, %s", idx, de.dn[0]);
+    printf("'%s'", de.dn[0]);
+    if ( de.lim > 1 ) {
+        for ( idx = 1 ; idx < de.lim ; ++idx ) {
+            printf(" + '%s'", de.dn[idx]);
+        }
+    }
+    printf(" entries:\n");
+    printf("%8d: directorie%s\n",             de.d_dir, ss(&de.d_dir, s));
+    printf("%8d: FIFO file%s\n",              de.d_fif, ss(&de.d_fif, s));
+    printf("%8d: character special file%s\n", de.d_chr, ss(&de.d_chr, s));
+    printf("%8d: block special file%s\n",     de.d_blk, ss(&de.d_blk, s));
+    printf("%8d: regular file%s\n",           de.d_reg, ss(&de.d_reg, s));
+    printf("%8d: symlink%s\n",                de.d_lnk, ss(&de.d_lnk, s));
+    printf("%8d: socket%s\n",                 de.d_sok, ss(&de.d_sok, s));
+    printf("%8d: union whiteout file%s\n",    de.d_wht, ss(&de.d_wht, s));
+    printf("%8d: unknown file type%s\n",      de.d_unk, ss(&de.d_unk, s));
+
+    display_output();
+
+    return EXIT_SUCCESS;
+}
+
+/**
+ * Print output(s) to the requested channel(s) in the requested format(s).
+ */
+int display_output()
+{
+    dprint("%i", opt.rec);
+    return 0;
+}
+
+/**
+ * `main()` takes ye olde `argc`/`argv` for the directory name to stat.
+ */
+int main(int argc, char *argv[])
+{
+    int param_index = 0;
+    cag_option_context context;
+
+    cag_option_init(&context, options, CAG_ARRAY_SIZE(options), argc, argv);
+
+    while (cag_option_fetch(&context)) {
+        switch (cag_option_get_identifier(&context)) {
+        case 'r':
+            opt.rec = true;
+            break;
+        case 'h':
+            printf("Usage: dstat [OPTION]... DIRECTORY...\n");
+            printf("Quickly gathers and reports the numbers of various file ");
+            printf("types under a\ndirectory or filesystem.\n\n");
+            cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
+            return EXIT_SUCCESS;
+        case '?':
+            cag_option_print_error(&context, stdout);
+            break;
+        }
+    }
+
+    int cnt = 0;
+
+    dprint("cag_option_get_index(&context): %d", cag_option_get_index(&context));
+    for ( param_index = cag_option_get_index(&context); param_index < argc;
+         ++param_index ) {
+        dprint("loop: %02d: param_index = %d, cnt = %d", cnt, param_index, cnt);
+        if ( dir_test(argv[param_index]) != true ) {
+            perror(argv[param_index]);
+            return EXIT_FAILURE;
+        } else {
+            dprint("ELSE IN : argv[%d] = %s, de.dn[%d] = %s", param_index, argv[param_index], cnt, de.dn[cnt]);
+            de.dn[cnt] = argv[param_index];
+            dprint("ELSE OUT: de.dn[%d]: %s", cnt, de.dn[cnt]);
+            ++cnt;
+        }
+    }
+
+    de.lim = cnt;
+    exit(collate_output());
+}

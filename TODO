@@ -1,0 +1,9 @@
+xxxAdd command line argument processing.
+ - Ability to descend through a filesystem under directory adding all stats therefrom to output.
+---Implement co-processing for multiple directories specified and/or directory descent.
+ - Serialise calls. And then maybe rewrite in Go?
+xxxHandle multiple directories specified at command line, with default directory argument processing.
+ - Able to log output and errors to separate files.
+xxxCreate proper header file FGS!
+ - Support a "line-mode" output with and without a header line, able to be continuously updated with progress.
+ - Support writing to separate output and error files in parallel with continuous line output.
