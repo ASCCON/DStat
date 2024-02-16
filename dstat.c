@@ -1,9 +1,9 @@
-dstat - Program to quickly gather and print directory statistics.
-
-Usage: dstat [OPTIONS]... [DIRECTORY]...
-where: OPTIONS are:
-       -r / --recursive
-
+/**********************************************************/
+/* dstat - Quickly gather and print directory statistics. */
+/*                                                        */
+/* See full documentation and sources at:                 */
+/* <https://github.com/ASCCON/DStat>                      */
+/**********************************************************/
 
 /**
  * Note non-standard github.com:likle/cargs.git
