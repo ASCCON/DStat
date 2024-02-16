@@ -1,5 +1,6 @@
-# NOTE: The dls.c and fls.c source files are kept here for historic purposes
-#       only. The dstat.c file is the only current file.
+# Developed on macOS Sonoma with XCode, CLang, and Homebrew. This should be
+# relatively easy to port to native BSD, GNU/Linux, and other Unix-like
+# operating systems.
 
 SOURCE := dstat.c
 
