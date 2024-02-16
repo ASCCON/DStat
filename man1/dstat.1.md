@@ -96,6 +96,9 @@ because of permissions errors) are simply logged to `[LOGFILE]` and program
 execution continues. Normally, any directory access errors, along with all 
 other errors, will cause the program to halt. 
 
+**-v**, **---version**
+: Prints the current software revision and exits.
+
 **-h**, **---help**
 : Display a short help message with usage information.
 
@@ -157,6 +160,8 @@ SOFTWARE.
 This release, 0.5.0, is largely non-functional. The core functionality of gathering directory statistics works. 
 
 - Formatting options are hit 'n' miss.
+
+- Version flag non-functional.
 
 - Directory recursion also only works one-level deep before returning an 
 error.
