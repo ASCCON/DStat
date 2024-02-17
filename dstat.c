@@ -35,6 +35,7 @@
  * Note non-standard github.com:likle/cargs.git
  */
 #include "lib/dstat.h"
+#include "lib/version.h"
 #include <cargs.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,6 +59,18 @@ static struct cag_option options[] = {
     {.identifier = 'r',
      .access_letters = "r",
      .access_name = "recursive",
+     .value_name = NULL,
+     .description = "Recurse down directories and include aggregated results."},
+
+    {.identifier = 'v',
+     .access_letters = "v",
+     .access_name = "version",
+     .value_name = NULL,
+     .description = "Recurse down directories and include aggregated results."},
+
+    {.identifier = 'V',
+     .access_letters = "V",
+     .access_name = "Version",
      .value_name = NULL,
      .description = "Recurse down directories and include aggregated results."},
 
@@ -243,6 +256,15 @@ int main(int argc, char *argv[])
             printf("Quickly gathers and reports the numbers of various file ");
             printf("types under a\ndirectory or filesystem.\n\n");
             cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
+            return EXIT_SUCCESS;
+        case 'v':
+            printf("%s %s\n", PROGNAME, VERSION);
+            return EXIT_SUCCESS;
+        case 'V':
+            printf("%s %s\n", PROGNAME, VERSION);
+            printf("Git commit ID: %s\n", COMMIT);
+            printf("%s\n", AUTHOR);
+            printf("%s\n", DATE);
             return EXIT_SUCCESS;
         case '?':
             cag_option_print_error(&context, stdout);
