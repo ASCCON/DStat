@@ -54,3 +54,5 @@ dkms.conf
 # DStat build ignore files:
 *.*~
 dstat
+man/dstat.1
+lib/version.h
