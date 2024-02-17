@@ -2,8 +2,8 @@
 title: DSTAT
 section: 1
 header: User Manual
-footer: dstat 0.5.0
-date: 15 February 2024
+footer: 0.5.1-1-g38bffee
+date: Feb 16 2024
 ---
 # NAME
 dstat - Quickly gather and print directory statistics.
@@ -99,6 +99,10 @@ other errors, will cause the program to halt.
 **-v**, **---version**
 : Prints the current software revision and exits.
 
+**-V**, **---Version**
+: Prints verbose software release information (including version tag, Git
+commit ID, author, and date information) and exits.
+
 **-h**, **---help**
 : Display a short help message with usage information.
 
@@ -157,11 +161,7 @@ SOFTWARE.
 
 
 # BUGS
-This release, 0.5.0, is largely non-functional. The core functionality of gathering directory statistics works. 
-
 - Formatting options are hit 'n' miss.
-
-- Version flag non-functional.
 
 - Directory recursion also only works one-level deep before returning an 
 error.

@@ -10,6 +10,8 @@ TARGET := $(NAME)
 
 MANPAGE := man1/$(TARGET).1
 
+MANSRC := man1/$(TARGET).1.md
+
 VERSION := lib/version.h
 
 TAG := $(shell git describe --tags)
@@ -19,6 +21,8 @@ COMMIT := $(shell git log -1 HEAD | egrep '^commit' | cut -d' ' -f2)
 AUTHOR := $(shell git log -1 HEAD | egrep '^Author:')
 
 DATE := $(shell git log -1 HEAD | egrep '^Date:')
+
+DATEFMT := $(shell git log -1 HEAD | egrep '^Date:' | cut -d' ' -f5 -f6 -f8)
 
 CC := cc
 
@@ -43,6 +47,7 @@ WFLAGS := -Wall -Wextra
 debug:
 	$(CC) $(CFLAGS) $(LDFLAGS) $(DFLAGS) $(WFLAGS) -o $(TARGET) $(SOURCE)
 
+version: $(VERSION)
 $(VERSION):
 	rm -f $(VERSION)
 	echo "/**\n * DStat lib/version.c\n *\n * Auto-generated at build time.\n */" > $(VERSION)
@@ -52,8 +57,13 @@ $(VERSION):
 	echo "const char *AUTHOR = \"$(AUTHOR)\";" >> $(VERSION)
 	echo "const char *DATE = \"$(DATE)\";"     >> $(VERSION)
 
+manpage: $(MANPAGE)
 $(MANPAGE):
-	$(PD) man1/$(TARGET).1.md -s -t man -o man1/$(TARGET).1 
+	$(shell sed -i.bak -e "s/^footer: .*/footer: $(TAG)/g" $(MANSRC))
+	$(shell sed -i.bak -e "s/^date: .*/date: $(DATEFMT)/g" $(MANSRC))
+	$(PD) man1/$(TARGET).1.md -s -t man -o $(MANPAGE)
+	cp $(MANSRC) README.md
+	rm -f $(MANSRC).bak
 
 $(TARGET):
 	$(CC) $(CFLAGS) $(LDFLAGS) $(WFLAGS) $(OFLAGS) $(TARGET) $(SOURCE)
