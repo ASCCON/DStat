@@ -99,6 +99,10 @@ other errors, will cause the program to halt.
 **-v**, **---version**
 : Prints the current software revision and exits.
 
+**-V**, **---Version**
+: Prints verbose software release information (including version tag, Git
+commit ID, author, and date information) and exits.
+
 **-h**, **---help**
 : Display a short help message with usage information.
 
