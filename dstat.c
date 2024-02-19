@@ -139,22 +139,14 @@ bool dir_test(const char *dn)
  * Print statistics on each (tested) directory.
  * Takes integer index value and struct pointer for stats.
  */
-int get_dirstats(char *dir)
+int get_dirstats(int idx)
 {
     DIR *dp;
-    dp = opendir(dir);
+    dp = opendir(de.dn[idx]);
     struct dirent *ep = readdir(dp);
-    char *dn_buf = malloc(sizeof(MAXPATHLEN));
-    dprint("entered get_dirstats('%s', %s, %i)", dir, ep->d_name, opt.rec);
+    dprint("entered get_dirstats('%s', %s, %i)", de.dn[idx], ep->d_name, opt.rec);
 
-    if ( fchdir(ep->d_ino) ) {
-        getcwd(dn_buf, MAXPATHLEN);
-        dprint("getcwd(%s, %d)", dn_buf, MAXPATHLEN);
-    } else {
-        perror("failed to enter current directory");
-    }
-
-    if ( dp != NULL /*&& chdir(dir)*/ ) {
+    if ( dp != NULL ) {
         while ( (ep = readdir(dp)) ) {
             dprint("ep = %hhu", ep->d_type);
             switch(ep->d_type) {
@@ -172,19 +164,21 @@ int get_dirstats(char *dir)
             if ( ep->d_type == DT_DIR && opt.rec == true &&
                  strncmp(ep->d_name, CD, ep->d_namlen) != 0 &&
                  strncmp(ep->d_name, PD, ep->d_namlen) != 0 ) {
-                dprint("strncmp(CD): %d, %s, %s, %d", strncmp(ep->d_name, CD, ep->d_namlen), ep->d_name, CD, ep->d_namlen);
-                dprint("strncmp(PD): %d, %s, %s, %d", strncmp(ep->d_name, PD, ep->d_namlen), ep->d_name, PD, ep->d_namlen);
+                dprint("strncmp(CD): %d, %s, %s, %d",
+                       strncmp(ep->d_name, CD, ep->d_namlen),
+                       ep->d_name, CD, ep->d_namlen);
+                dprint("strncmp(PD): %d, %s, %s, %d",
+                       strncmp(ep->d_name, PD, ep->d_namlen),
+                       ep->d_name, PD, ep->d_namlen);
                 dprint("rec: de.dn[0]: %s, ep->d_name: %s", de.dn[0], ep->d_name);
-                //de.dn[0] = ep->d_name;
-                dprint("calling: get_dirstats(%s, %s, %i)", ep->d_name, de.dn[0], opt.rec);
-                get_dirstats(ep->d_name);
+                dprint("calling: get_dirstats(%s, %s, %i)",
+                       ep->d_name, de.dn[0], opt.rec);
             }
         }
     } else {
-        perror(dir);
+        perror(de.dn[idx]);
     }
 
-    free(dn_buf);
     return EXIT_SUCCESS;
 }
 
@@ -197,9 +191,9 @@ int collate_output()
 {
     int idx = 0;
 
-    for ( idx = 0 ; idx < de.lim ; idx++ ) {
+    for ( idx = 0 ; idx < de.lim ; ++idx ) {
         dprint("de.lim %d, idx %2d: %s", de.lim, idx, de.dn[idx]);
-        get_dirstats(de.dn[idx]);
+        get_dirstats(idx);
         dprint("de.lim %d, idx %2d: %s", de.lim, idx, de.dn[idx]);
     }
 
@@ -256,39 +250,42 @@ int main(int argc, char *argv[])
             printf("Quickly gathers and reports the numbers of various file ");
             printf("types under a\ndirectory or filesystem.\n\n");
             cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
-            return EXIT_SUCCESS;
+            exit(EXIT_SUCCESS);
         case 'v':
             printf("%s %s\n", PROGNAME, VERSION);
-            return EXIT_SUCCESS;
+            exit(EXIT_SUCCESS);
         case 'V':
             printf("%s %s\n", PROGNAME, VERSION);
             printf("Git commit ID: %s\n", COMMIT);
             printf("%s\n", AUTHOR);
             printf("%s\n", DATE);
-            return EXIT_SUCCESS;
+            exit(EXIT_SUCCESS);
         case '?':
             cag_option_print_error(&context, stdout);
-            break;
+            exit(EXIT_FAILURE);
         }
     }
 
-    int cnt = 0;
+    int dircnt = 0;
 
-    dprint("cag_option_get_index(&context): %d", cag_option_get_index(&context));
     for ( param_index = cag_option_get_index(&context); param_index < argc;
          ++param_index ) {
-        dprint("loop: %02d: param_index = %d, cnt = %d", cnt, param_index, cnt);
-        if ( dir_test(argv[param_index]) != true ) {
+        dprint("loop: %02d: param_index = %d, dircnt = %d",
+               dircnt, param_index, dircnt);
+        if ( dir_test(argv[param_index]) == true ) {
+            de.dn[dircnt] = argv[param_index];
+            ++dircnt;
+        } else {
             perror(argv[param_index]);
             return EXIT_FAILURE;
-        } else {
-            dprint("ELSE IN : argv[%d] = %s, de.dn[%d] = %s", param_index, argv[param_index], cnt, de.dn[cnt]);
-            de.dn[cnt] = argv[param_index];
-            dprint("ELSE OUT: de.dn[%d]: %s", cnt, de.dn[cnt]);
-            ++cnt;
         }
     }
 
-    de.lim = cnt;
+    if ( dircnt == 0 ) {
+        dircnt = 1;
+        de.dn[0] = ".";
+    }
+
+    de.lim = dircnt;
     exit(collate_output());
 }
