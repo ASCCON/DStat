@@ -101,7 +101,7 @@ bool dir_test(const char *dn);
  * Print statistics on each (tested) directory.
  * Takes integer index value and struct pointer for stats.
  */
-int get_dirstats(char *dir);
+int get_dirstats(int idx);
 
 /**
  * Takes the number of input directories, a pointer to the list of

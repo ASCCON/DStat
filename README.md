@@ -2,7 +2,7 @@
 title: DSTAT
 section: 1
 header: User Manual
-footer: 0.5.1-1-g38bffee
+footer: 0.5.2
 date: Feb 16 2024
 ---
 # NAME
