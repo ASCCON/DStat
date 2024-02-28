@@ -95,7 +95,7 @@ struct sel_opts_s opt = {
  * statistical entries.
  */
 struct dir_ent_s de = {
-    // Default values for dir_ent{}.
+    // Default values for dir_ent_s{}.
     .d_fif = 0, .d_chr = 0, .d_dir = 0,
     .d_blk = 0, .d_reg = 0, .d_lnk = 0,
     .d_sok = 0, .d_wht = 0, .d_unk = 0
@@ -162,14 +162,14 @@ void addDir(dir_list *paths, dir_node *dir_ent)
 /**
  * Get a list of the directory path entries in the linked-list.
  */
-void getPaths(dir_list *paths, void (*printDir)(dp_name *dir))
+void getPaths(dir_list *paths)//, void (*printDir)(dp_name *dir))
 {
     dir_node *cursor = paths->head;
 
     dprint("list has %d entries", numDirs(paths));
     while ( cursor ) {
         dprint("cursor is not %s", "NULL");
-        getDir(cursor, printDir);
+        getDir(cursor);//, printDir);
         cursor = cursor->next;
     }
 }
@@ -177,18 +177,43 @@ void getPaths(dir_list *paths, void (*printDir)(dp_name *dir))
 /**
  * Fetch one node entry (directory path) from the linked-list.
  */
-void getDir(dir_node *dir_ent, void (*printDir)(dp_name *dir))
+void getDir(dir_node *dir_ent)//, void (*printDir)(dp_name *dir))
 {
-    dprint("getDir: %s", dir_ent->dir);
-    printDir(dir_ent->dir);
-}
+    dprint("%s", dir_ent->dir);
+    DIR *dp;
+    dp = opendir(dir_ent->dir);
+    struct dirent *ep = readdir(dp);
 
-/**
- * Ugly-ass hack for doing some weird shizznizzle.
- */
-void printChar(char *c)
-{
-    printf("%s\n", c);
+    if ( dp ) {
+        while ( (ep = readdir(dp)) ) {
+            dprint("ep = %hhu", ep->d_type);
+            switch(ep->d_type) {
+            case DT_BLK:  ++(de.d_blk);
+                dprint("DT_BLK: %d", de.d_blk); break;
+            case DT_CHR:  ++(de.d_chr);
+                dprint("DT_CHR: %d", de.d_chr); break;
+            case DT_DIR:  ++(de.d_dir);
+                dprint("DT_DIR: %d", de.d_dir); break;
+            case DT_LNK:  ++(de.d_lnk);
+                dprint("DT_LNK: %d", de.d_lnk); break;
+            case DT_REG:  ++(de.d_reg);
+                dprint("DT_REG: %d", de.d_reg); break;
+            case DT_WHT:  ++(de.d_wht);
+                dprint("DT_WHT: %d", de.d_wht); break;
+            case DT_FIFO: ++(de.d_fif);
+                dprint("DT_FIFO: %d", de.d_fif); break;
+            case DT_SOCK: ++(de.d_sok);
+                dprint("DT_SOCK: %d", de.d_sok); break;
+            default:      ++(de.d_unk);
+                dprint("DT_UNK: %d", de.d_unk); break;
+            }
+        }
+    } else {
+        dprint("error %d", errno);
+        perror(dir_ent->dir);
+    }
+
+    (void)closedir(dp);
 }
 
 /**
@@ -305,20 +330,12 @@ bool getDirStats(struct dl_s *head)
  * Takes the number of input directories, a pointer to the list of
  * directories, and the directory entry statistics structure and
  * collates the statistics into a single output block.
- *//*
-bool collateOutput(struct dl_s *head)
+ */
+void collateOutput()
 {
-    int idx = 0;
-
     char *s = malloc(sizeof(char) + 1);
-    dprint("idx:%d, %s", idx, de.dn[0]);
-    printf("'%s'", de.dn[0]);
-    if ( *de.lim> 1 ) {
-        for ( idx = 1 ; idx < *de.lim ; ++idx ) {
-            printf(" + '%s'", de.dn[idx]);
-        }
-    }
-    printf(" entries:\n");
+
+    printf("Totals:\n");
     printf("%8d:directorie%s\n",             de.d_dir, ess(&de.d_dir, s));
     printf("%8d:FIFO file%s\n",              de.d_fif, ess(&de.d_fif, s));
     printf("%8d:character special file%s\n", de.d_chr, ess(&de.d_chr, s));
@@ -329,11 +346,9 @@ bool collateOutput(struct dl_s *head)
     printf("%8d:union whiteout file%s\n",    de.d_wht, ess(&de.d_wht, s));
     printf("%8d:unknown file type%s\n",      de.d_unk, ess(&de.d_unk, s));
 
-    displayOutput();
-
-    return true;
+    //displayOutput();
 }
-*/
+
 /**
  * Print output(s) to the requested channel(s) in the requested format(s).
  */
@@ -417,7 +432,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    getPaths(dir_list, printChar);
-
+    getPaths(dir_list);
+    collateOutput();
     exit(errno);
 }

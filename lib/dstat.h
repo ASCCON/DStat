@@ -122,11 +122,12 @@ int  numDirs(dir_list *paths);
 /// Add a directory entry to the linked-list.
 void addDir(dir_list *paths, dir_node *dir_ent);
 
-/// Traverse the linked-list.
-void getPaths(dir_list *paths, void (*printDir)(dp_name *dir));
+/// Traverse the linked-list to populate dir_ent_s{}.
+void getPaths(dir_list *paths);
 
-/// Get a node entry (directory path) from the linked-list.
-void getDir(dir_node *dir_ent, void (*printDir)(dp_name *dir));
+/// Get a node entry (directory path) from the linked-list and add its stats
+/// to dir_ent_s{}.
+void getDir(dir_node *dir_ent);
 
 /**
  * Decides whether to add an `s` to indicate singular or plural on output
@@ -145,7 +146,7 @@ bool testDir(const char *dn);
  * directories, and the directory entry statistics structure and
  * collates the statistics into a single output block.
  */
-//bool collateOutput(struct dl_s *head);
+void collateOutput();
 
 /**
  * Print output(s) to the requested channel(s) in the requested format(s).
