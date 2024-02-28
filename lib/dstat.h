@@ -95,38 +95,38 @@ struct dir_ent_s {
  * The following structs and function declarations enable the linked-list
  * for adding and traversing directory paths.
  */
-/// Special type specific to directory names.
-typedef char Direc;
+/// Special type specific to directory path names.
+typedef char dp_name;
 
 /// A directory entry node on the linked-list.
-typedef struct DirEnt {
-    struct DirEnt *next;
-    Direc         *dir;
-} DirEnt;
+typedef struct dir_node {
+    struct dir_node *next;
+    dp_name         *dir;
+} dir_node;
 
 /// The linked-list itself.
 typedef struct {
-    DirEnt *head;
-    int    num_dirs;
-} DirList;
+    dir_node *head;
+    int      num_dirs;
+} dir_list;
 
 /// Initialise a node on the linked-list.
-DirEnt *createDirEnt(Direc *dir);
+dir_node *createDirNode(dp_name *dir);
 
 /// Initialise the linked-list in main().
-DirList *createDirList();
+dir_list *createDirList();
 
 /// Diagnostic for checking against the supplied user options.
-int  numDirs(DirList *paths);
+int  numDirs(dir_list *paths);
 
 /// Add a directory entry to the linked-list.
-void addDir(DirList *paths, DirEnt *dir_ent);
+void addDir(dir_list *paths, dir_node *dir_ent);
 
 /// Traverse the linked-list.
-void getPaths(DirList *paths, void (*printDir)(Direc *dir));
+void getPaths(dir_list *paths, void (*printDir)(dp_name *dir));
 
 /// Get a node entry (directory path) from the linked-list.
-void getDir(DirEnt *dir_ent, void (*printDir)(Direc *dir));
+void getDir(dir_node *dir_ent, void (*printDir)(dp_name *dir));
 
 /**
  * Decides whether to add an `s` to indicate singular or plural on output

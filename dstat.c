@@ -104,9 +104,9 @@ struct dir_ent_s de = {
 /**
  * Initialise a list node to the linked-list for storing directory paths.
  */
-DirEnt *createDirEnt(Direc *dir)
+dir_node *createDirNode(dp_name *dir)
 {
-    DirEnt *new_ent = (DirEnt *)calloc(1,sizeof(DirEnt));
+    dir_node *new_ent = (dir_node *)calloc(1,sizeof(dir_node));
 
     if ( new_ent ) {
         new_ent->dir = dir;
@@ -122,9 +122,9 @@ DirEnt *createDirEnt(Direc *dir)
 /**
  * Initialise the linked-list for storing directory paths.
  */
-DirList *createDirList()
+dir_list *createDirList()
 {
-    DirList *dir_path = (DirList *)calloc(1, sizeof(DirList));
+    dir_list *dir_path = (dir_list *)calloc(1, sizeof(dir_list));
 
     if ( dir_path ) {
         dprint("initialised %s", "dir_path");
@@ -139,7 +139,7 @@ DirList *createDirList()
 /**
  * Fetch the current number of directory entries from the linked-list.
  */
-int numDirs(DirList *paths)
+int numDirs(dir_list *paths)
 {
     return paths->num_dirs;
 }
@@ -147,10 +147,10 @@ int numDirs(DirList *paths)
 /**
  * Add a directory entry to the linked-list.
  */
-void addDir(DirList *paths, DirEnt *dir_ent)
+void addDir(dir_list *paths, dir_node *dir_ent)
 {
     dprint("addDir %s", dir_ent->dir);
-    DirEnt *next = paths->head;
+    dir_node *next = paths->head;
     paths->head = dir_ent;
     dir_ent->next = next;
 
@@ -162,9 +162,9 @@ void addDir(DirList *paths, DirEnt *dir_ent)
 /**
  * Get a list of the directory path entries in the linked-list.
  */
-void getPaths(DirList *paths, void (*printDir)(Direc *dir))
+void getPaths(dir_list *paths, void (*printDir)(dp_name *dir))
 {
-    DirEnt *cursor = paths->head;
+    dir_node *cursor = paths->head;
 
     dprint("list has %d entries", numDirs(paths));
     while ( cursor ) {
@@ -177,7 +177,7 @@ void getPaths(DirList *paths, void (*printDir)(Direc *dir))
 /**
  * Fetch one node entry (directory path) from the linked-list.
  */
-void getDir(DirEnt *dir_ent, void (*printDir)(Direc *dir))
+void getDir(dir_node *dir_ent, void (*printDir)(dp_name *dir))
 {
     dprint("getDir: %s", dir_ent->dir);
     printDir(dir_ent->dir);
@@ -350,9 +350,9 @@ int main(int argc, char *argv[])
 {
     /// Initialise the variables and linked list for storing directory paths.
     char *this_dir = malloc(MAXPATHLEN);
-    Direc *dir_path = NULL;
-    DirEnt *dir_ent = NULL;
-    DirList *dir_list = createDirList();
+    dp_name *dir_path = NULL;
+    dir_node *dir_ent = NULL;
+    dir_list *dir_list = createDirList();
 
     /// Initialise, read, and set the various user options.
     int param_index = 0;
@@ -394,7 +394,7 @@ int main(int argc, char *argv[])
                dir_cnt, param_index, dir_cnt);
         if ( testDir(argv[param_index]) ) {
             this_dir = argv[param_index];
-            dir_ent = createDirEnt(this_dir);
+            dir_ent = createDirNode(this_dir);
             addDir(dir_list, dir_ent);
             ++dir_cnt;
         } else {
@@ -408,7 +408,7 @@ int main(int argc, char *argv[])
     if ( dir_cnt == 0 ) {
         this_dir = getcwd(dir_path, MAXPATHLEN);
         if ( testDir(this_dir) ) {
-            dir_ent = createDirEnt(this_dir);
+            dir_ent = createDirNode(this_dir);
             dir_cnt = 1;
             addDir(dir_list, dir_ent);
         } else {
