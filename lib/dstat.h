@@ -32,6 +32,14 @@
 /*************************************************************************/
 
 /**
+ * Define this as the DStat header file. For when only the most verbose
+ * will do.
+ */
+#ifndef DSTAT_H
+#define DSTAT_H
+#endif
+
+/**
  * Enables the `DT_` entries in sys/dirent.h.
  */
 #define _BSD_SOURCE
@@ -64,7 +72,7 @@
 /**
  * Separate structure for passing selected options to functions.
  */
-struct sel_opts {
+struct sel_opts_s {
     bool rec; // recursively descend all directories
     bool upd; // continuous update option
     bool lin; // display line output rather than descriptive block
@@ -79,38 +87,67 @@ struct sel_opts {
  * This structure holds the variables and pointers for adding dirent.h
  * statistical entries.
  */
-struct dir_ent {
+struct dir_ent_s {
     int d_fif, d_chr, d_dir, d_blk, d_reg, d_lnk, d_sok, d_wht, d_unk;
-    int lim;
-    char *dn[1024]; // FIX THIS!
 };
+
+/**
+ * The following structs and function declarations enable the linked-list
+ * for adding and traversing directory paths.
+ */
+/// Special type specific to directory names.
+typedef char Direc;
+
+/// A directory entry node on the linked-list.
+typedef struct DirEnt {
+    struct DirEnt *next;
+    Direc         *dir;
+} DirEnt;
+
+/// The linked-list itself.
+typedef struct {
+    DirEnt *head;
+    int    num_dirs;
+} DirList;
+
+/// Initialise a node on the linked-list.
+DirEnt *createDirEnt(Direc *dir);
+
+/// Initialise the linked-list in main().
+DirList *createDirList();
+
+/// Diagnostic for checking against the supplied user options.
+int  numDirs(DirList *paths);
+
+/// Add a directory entry to the linked-list.
+void addDir(DirList *paths, DirEnt *dir_ent);
+
+/// Traverse the linked-list.
+void getPaths(DirList *paths, void (*printDir)(Direc *dir));
+
+/// Get a node entry (directory path) from the linked-list.
+void getDir(DirEnt *dir_ent, void (*printDir)(Direc *dir));
 
 /**
  * Decides whether to add an `s` to indicate singular or plural on output
  * strings. Takes an `int` of how many things in question and a pointer to
  * `char` where a letter `s` will be populated or nulled.
  */
-char *ss(int *cnt, char *s);
+char *ess(int *cnt, char *s);
 
 /**
  * Test directory, identified by pointer to const char, prior to further action.
  */
-bool dir_test(const char *dn);
-
-/**
- * Print statistics on each (tested) directory.
- * Takes integer index value and struct pointer for stats.
- */
-int get_dirstats(int idx);
+bool testDir(const char *dn);
 
 /**
  * Takes the number of input directories, a pointer to the list of
  * directories, and the directory entry statistics structure and
  * collates the statistics into a single output block.
  */
-int collate_output();
+//bool collateOutput(struct dl_s *head);
 
 /**
  * Print output(s) to the requested channel(s) in the requested format(s).
  */
-int display_output();
+int displayOutput();

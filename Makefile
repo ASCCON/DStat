@@ -45,7 +45,7 @@ OFLAGS := -O3 -o
 WFLAGS := -Wall -Wextra
 
 debug:
-	$(CC) $(CFLAGS) $(LDFLAGS) $(DFLAGS) $(WFLAGS) -o $(TARGET) $(SOURCE)
+	$(CC) -v $(CFLAGS) $(LDFLAGS) $(DFLAGS) $(WFLAGS) -o $(TARGET) $(SOURCE)
 
 version: $(VERSION)
 $(VERSION):
