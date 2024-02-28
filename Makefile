@@ -63,7 +63,7 @@ $(MANPAGE):
 	$(shell sed -i.bak -e "s/^date: .*/date: $(DATEFMT)/g" $(MANSRC))
 	$(PD) man1/$(TARGET).1.md -s -t man -o $(MANPAGE)
 	cp $(MANSRC) README.md
-	$(shell sed -i.bak -e "s/---/--/g" README.md)
+	$(shell sed -i.bak -e "s/\*\*---/\*\*--/g" README.md)
 	rm -f README.md.bak
 	rm -f $(MANSRC).bak
 
