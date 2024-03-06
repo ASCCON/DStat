@@ -24,6 +24,8 @@ DATE := $(shell git log -1 HEAD | egrep '^Date:')
 
 DATEFMT := $(shell git log -1 HEAD | egrep '^Date:' | cut -d' ' -f5 -f6 -f8)
 
+BRANCH := $(shell git branch --show-current)
+
 CC := cc
 
 GIT := git
@@ -56,6 +58,7 @@ $(VERSION):
 	echo "const char *COMMIT = \"$(COMMIT)\";" >> $(VERSION)
 	echo "const char *AUTHOR = \"$(AUTHOR)\";" >> $(VERSION)
 	echo "const char *DATE = \"$(DATE)\";"     >> $(VERSION)
+	echo "const char *BRANCH = \"$(BRANCH)\";" >> $(VERSION)
 
 manpage: $(MANPAGE)
 $(MANPAGE):
