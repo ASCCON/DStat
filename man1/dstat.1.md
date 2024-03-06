@@ -12,8 +12,8 @@ dstat - Quickly gather and print directory statistics.
 **dstat** [*OPTION*]... [*DIRECTORY*]...
 
 # DESCRIPTION
-**dstat** quickly gathers "directory statistics" on single directories or
-recursively across entire filesystems. It is most useful as a diagnostics and
+**dstat** quickly gathers "directory statistics" on one or more directories
+supplied at the command line. It is most useful as a diagnostics and
 "sanity checking" tool in BigData environments where file management can be
 unwieldy. For example, trying to determine the number of files under a 
 certain directory with **ls**(1) can take many minutes to complete when 
@@ -76,10 +76,6 @@ printed as:
 
 > `DT_TYPE`:num, `DT_TYPE`:num, ...
 
-**-r**, **---recursive**
-: For each valid directory supplied, get directory stats and follow sub-
-directories, adding their stats to the accumulated total. 
-
 **-o**, **---outfile** [*OUTFILE*]
 : Send the default output to the named `[OUTFILE]`. The output file always 
 includes directory/ies supplied and explanatory block output text statistcs, 
@@ -110,27 +106,20 @@ commit ID, author, and date information) and exits.
 **dstat**
 : Prints directory statistics for the current working directory.
 
-**dstat -r /data**
-: Descends through the entire `/data` filesystem and prints a summary output
-of all directories, files, and different file types encountered.
+**dstat ---continuous /data /bigdata**
+: Display combined stats for both the `/data` and `/bigdata` filesystems,
+printing the output to a single line, inline, as it becomes available.
 
-**dstat ---recursive ---continuous /data /bigdata**
-: Descend through both the `/data` and `/bigdata` filesystems and print the
-output to a single line, inline, as it becomes available.
-
-**dstat -c -L -q -o /tmp/dstat.out -l /tmp/dstat.log -r /bigdata | tee > /tmp/dsatat.csv**
+**dstat -c -L -q -o /tmp/dstat.out -l /tmp/dstat.log /bigdata | tee > /tmp/dsatat.csv**
 : Obviously, this one is  a little more involved. In short, monitor progress
 whilst saving state and not stopping on errant directory names but dutifully
 logging such to the logfile (in this case, `/tmp/dstat.log`). In particular, 
-continuously follow the output (via `STDOUT`) of recursively scanning the 
-`/bigdata` filesystem. As each sub-directory yields output, send it to a new 
-line of `STDOUT` using the **tee**(1) command to view the output as well as 
-sending it to a separate file, `/tmp/dstat.csv`. Summary output is sent to an
-output file, here `/tmp/dstat.out`.
+continuously follow the output (via `STDOUT`) for scanning the `/bigdata`
+directory. Summary output is sent to an output file, here `/tmp/dstat.out`.
 
-**dstat -r ---logfile /dev/null /data /bigdata**
-: Print statistics on the `/data` and `/bigdata` filesystems ignoring any 
-non- fatal errors.
+**dstat ---logfile /dev/null /data /bigdata**
+: Print statistics on the `/data` and `/bigdata` filesystems ignoring any non-
+fatal errors.
 
 # AUTHORS
 Written by Walter G Davies, A Stranger Chronicle.

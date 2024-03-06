@@ -47,7 +47,7 @@
 /**
  * Set up debug printing.
  */
-#define dprint(fmt, ...)                                                \
+#define Dprint(fmt, ...)                                                \
   do { if (DEBUG) fprintf(stderr, "<DEBUG> %s:%d:%s(): " fmt "\n",      \
                           __FILE__, __LINE__, __func__, __VA_ARGS__); } \
   while (0)
@@ -73,7 +73,6 @@
  * Separate structure for passing selected options to functions.
  */
 struct sel_opts_s {
-    bool rec; // recursively descend all directories
     bool upd; // continuous update option
     bool lin; // display line output rather than descriptive block
     bool qit; // quite mode; no header lines on line output
@@ -85,10 +84,14 @@ struct sel_opts_s {
 
 /**
  * This structure holds the variables and pointers for adding dirent.h
- * statistical entries.
+ * statistical entries. It can also hold the following optional or
+ * temporary parameters:
+ *   - `char *fqdp` : A fully-qualified directory path string for passing
+ *                    to the `struct dir_node{}`.
  */
 struct dir_ent_s {
     int d_fif, d_chr, d_dir, d_blk, d_reg, d_lnk, d_sok, d_wht, d_unk;
+    char *fqdp;
 };
 
 /**
@@ -99,47 +102,65 @@ struct dir_ent_s {
 typedef char dp_name;
 
 /// A directory entry node on the linked-list.
-typedef struct dir_node {
-    struct dir_node *next;
-    dp_name         *dir;
-} dir_node;
+typedef struct dir_node_s {
+    struct dir_node_s *next;
+    dp_name           *dir;
+} dir_node_s;
 
 /// The linked-list itself.
 typedef struct {
-    dir_node *head;
-    int      num_dirs;
-} dir_list;
+    dir_node_s *head;
+    int        num_dirs;
+} dir_list_s;
 
 /// Initialise a node on the linked-list.
-dir_node *createDirNode(dp_name *dir);
+dir_node_s *createDirNode(dp_name *dir);
 
 /// Initialise the linked-list in main().
-dir_list *createDirList();
-
-/// Diagnostic for checking against the supplied user options.
-int  numDirs(dir_list *paths);
+dir_list_s *createDirList();
 
 /// Add a directory entry to the linked-list.
-void addDir(dir_list *paths, dir_node *dir_ent);
+void addDir(dir_list_s *paths, dir_node_s *dir_node, char *path_arg);
 
 /// Traverse the linked-list to populate dir_ent_s{}.
-void getPaths(dir_list *paths);
+void getPaths(dir_list_s *paths);
 
-/// Get a node entry (directory path) from the linked-list and add its stats
-/// to dir_ent_s{}.
-void getDir(dir_node *dir_ent);
+/// Add the stats from a node entry (directory path) to the linked-list.
+void getDirStats(dir_node_s *dir_node);
+
+/**
+ * The `action` enum is for the `pl()` plural decision function.
+ * The `add` action adds (returns) an _s_ to "pluralise" a string.
+ * The `rep` action replaces (returns) either a _y_ (singular) or _ies_
+ * (plural) as appropriate to the calling string.
+ */
+enum action {
+    add = 0,
+    rep
+};
 
 /**
  * Decides whether to add an `s` to indicate singular or plural on output
  * strings. Takes an `int` of how many things in question and a pointer to
  * `char` where a letter `s` will be populated or nulled.
  */
-char *ess(int *cnt, char *s);
+char *pl(int *cnt, char *s, enum action act);
+
+/**
+ * This "trinary" value is used to indicate a return value of "false", "true",
+ * or "true, but"; this last case indicating a non-error condition requiring
+ * further action by the called.
+ */
+enum trin {
+    no = 0,
+    yes,
+    update
+};
 
 /**
  * Test directory, identified by pointer to const char, prior to further action.
  */
-bool testDir(const char *dn);
+bool testDir(char *dir);
 
 /**
  * Takes the number of input directories, a pointer to the list of
