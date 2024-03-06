@@ -140,22 +140,11 @@ enum action {
 };
 
 /**
- * Decides whether to add an `s` to indicate singular or plural on output
+ * Decides whether to add an "s"/"ies" to indicate singular or plural on output
  * strings. Takes an `int` of how many things in question and a pointer to
- * `char` where a letter `s` will be populated or nulled.
+ * `char` where the appropriate character(s) will be populated or nulled.
  */
 char *pl(int *cnt, char *s, enum action act);
-
-/**
- * This "trinary" value is used to indicate a return value of "false", "true",
- * or "true, but"; this last case indicating a non-error condition requiring
- * further action by the called.
- */
-enum trin {
-    no = 0,
-    yes,
-    update
-};
 
 /**
  * Test directory, identified by pointer to const char, prior to further action.

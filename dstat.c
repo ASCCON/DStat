@@ -247,9 +247,9 @@ void getPaths(dir_list_s *paths)
 }
 
 /**
- * Decides whether to add an `s` to indicate singular or plural on output
+ * Decides whether to add an "s"/"ies" to indicate singular or plural on output
  * strings. Takes an `int` of how many things in question and a pointer to
- * `char` where a letter `s` will be populated or nulled.
+ * `char` where the appropriate character(s) will be populated or nulled.
  */
 char *pl(int *cnt, char *p, enum action act)
 {
