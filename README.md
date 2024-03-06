@@ -2,8 +2,8 @@
 title: DSTAT
 section: 1
 header: User Manual
-footer: 0.5.4-4-g1a714b8
-date: Feb 28 2024
+footer: 0.5.5
+date: Mar 5 2024
 ---
 # NAME
 dstat - Quickly gather and print directory statistics.
@@ -12,8 +12,8 @@ dstat - Quickly gather and print directory statistics.
 **dstat** [*OPTION*]... [*DIRECTORY*]...
 
 # DESCRIPTION
-**dstat** quickly gathers "directory statistics" on single directories or
-recursively across entire filesystems. It is most useful as a diagnostics and
+**dstat** quickly gathers "directory statistics" on one or more directories
+supplied at the command line. It is most useful as a diagnostics and
 "sanity checking" tool in BigData environments where file management can be
 unwieldy. For example, trying to determine the number of files under a 
 certain directory with **ls**(1) can take many minutes to complete when 
@@ -52,19 +52,19 @@ Any unknown file types (e.g not listed in `sys/dirent.h`) will be counted as
 Multiple directories may be specified (see EXAMPLES). If no directory is
 specified, the current working directory is assumed.
 
-**-c**, **--continuous**
+**-c**, **---continuous**
 : Continuously update `STDOUT` with statistical counts. This helps you look 
 busy whilst sipping at your coffee. Implies `-L` / `--linear` output format.
 Count updates are printed on a single line, updated inline, unless the `-L` /
 `--linear` flag is explicitly called.
 
-**-L**, **--linear**
+**-L**, **---linear**
 : Rather than displaying a descriptive block of text with the stastical data
 (the default output), show a header line followed by a single line of all
 statistical data (see EXAMPLES). When explicitly specified with the `-c` /
 `--continuous` option, count updates are printed on new lines.
 
-**-q**, **--quiet**
+**-q**, **---quiet**
 : Do not print the directory list in default output mode. With `-c` _or_ `-L`
 flags, prints the header line without decoration. With `-c` _and_ `-L` flags,
 continuous updates are updated as new lines in CSV format. Statistics are
@@ -76,11 +76,7 @@ printed as:
 
 > `DT_TYPE`:num, `DT_TYPE`:num, ...
 
-**-r**, **--recursive**
-: For each valid directory supplied, get directory stats and follow sub-
-directories, adding their stats to the accumulated total. 
-
-**-o**, **--outfile** [*OUTFILE*]
+**-o**, **---outfile** [*OUTFILE*]
 : Send the default output to the named `[OUTFILE]`. The output file always 
 includes directory/ies supplied and explanatory block output text statistcs, 
 regardless of other output format control flags. Note that this flag may be 
@@ -88,7 +84,7 @@ used _in addition_ to aforementioned output format- control flags; this
 implies opening `[OUTFILE]` on start, final population of `[OUTFILE]` prior to
 termination, and output to `STDOUT` following the output format flags.
 
-**-l**, **--logfile** [*LOGFILE*]
+**-l**, **---logfile** [*LOGFILE*]
 : Similar to the `-o` / `--outfile` flag, send error data to the named
 `[LOGFILE]`. The main difference with specifying the `-l` / `--logfile` option 
 is that any directory/ies that are not valid or cannot be examined (e.g 
@@ -96,41 +92,34 @@ because of permissions errors) are simply logged to `[LOGFILE]` and program
 execution continues. Normally, any directory access errors, along with all 
 other errors, will cause the program to halt. 
 
-**-v**, **--version**
+**-v**, **---version**
 : Prints the current software revision and exits.
 
-**-V**, **--Version**
+**-V**, **---Version**
 : Prints verbose software release information (including version tag, Git
 commit ID, author, and date information) and exits.
 
-**-h**, **--help**
+**-h**, **---help**
 : Display a short help message with usage information.
 
 # EXAMPLES
 **dstat**
 : Prints directory statistics for the current working directory.
 
-**dstat -r /data**
-: Descends through the entire `/data` filesystem and prints a summary output
-of all directories, files, and different file types encountered.
+**dstat ---continuous /data /bigdata**
+: Display combined stats for both the `/data` and `/bigdata` filesystems,
+printing the output to a single line, inline, as it becomes available.
 
-**dstat --recursive --continuous /data /bigdata**
-: Descend through both the `/data` and `/bigdata` filesystems and print the
-output to a single line, inline, as it becomes available.
-
-**dstat -c -L -q -o /tmp/dstat.out -l /tmp/dstat.log -r /bigdata | tee > /tmp/dsatat.csv**
+**dstat -c -L -q -o /tmp/dstat.out -l /tmp/dstat.log /bigdata | tee > /tmp/dsatat.csv**
 : Obviously, this one is  a little more involved. In short, monitor progress
 whilst saving state and not stopping on errant directory names but dutifully
 logging such to the logfile (in this case, `/tmp/dstat.log`). In particular, 
-continuously follow the output (via `STDOUT`) of recursively scanning the 
-`/bigdata` filesystem. As each sub-directory yields output, send it to a new 
-line of `STDOUT` using the **tee**(1) command to view the output as well as 
-sending it to a separate file, `/tmp/dstat.csv`. Summary output is sent to an
-output file, here `/tmp/dstat.out`.
+continuously follow the output (via `STDOUT`) for scanning the `/bigdata`
+directory. Summary output is sent to an output file, here `/tmp/dstat.out`.
 
-**dstat -r --logfile /dev/null /data /bigdata**
-: Print statistics on the `/data` and `/bigdata` filesystems ignoring any 
-non- fatal errors.
+**dstat ---logfile /dev/null /data /bigdata**
+: Print statistics on the `/data` and `/bigdata` filesystems ignoring any non-
+fatal errors.
 
 # AUTHORS
 Written by Walter G Davies, A Stranger Chronicle.

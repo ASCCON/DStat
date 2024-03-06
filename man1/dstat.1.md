@@ -2,8 +2,8 @@
 title: DSTAT
 section: 1
 header: User Manual
-footer: 0.5.4-4-g1a714b8
-date: Feb 28 2024
+footer: 0.5.5
+date: Mar 5 2024
 ---
 # NAME
 dstat - Quickly gather and print directory statistics.
