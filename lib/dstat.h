@@ -129,9 +129,9 @@ void getPaths(dir_list_s *paths);
 void getDirStats(dir_node_s *dir_node);
 
 /**
- * The `action` enum is for the `pl()` plural decision function.
- * The `add` action adds (returns) an _s_ to "pluralise" a string.
- * The `rep` action replaces (returns) either a _y_ (singular) or _ies_
+ * The `action` enum is generic for functions needing extra direction.
+ * The `add` action tells `pl()` to add an _s_ to "pluralise" a string.
+ * The `rep` action tells `pl()` to replace either a _y_ (singular) or _ies_
  * (plural) as appropriate to the calling string.
  */
 enum action {
@@ -156,9 +156,19 @@ bool testDir(char *dir);
  * directories, and the directory entry statistics structure and
  * collates the statistics into a single output block.
  */
-void collateOutput();
+void blockOutput();
+
+/**
+ * Print decorations for linear output.
+ */
+void printDeco();
+
+/**
+ * Displays output in a linear, continuous, and/or CSV format.
+ */
+void lineOutput();
 
 /**
  * Print output(s) to the requested channel(s) in the requested format(s).
  */
-int displayOutput();
+int displayOutput(dir_list_s *paths);
