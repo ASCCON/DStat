@@ -58,6 +58,12 @@ const char *PD = "..";
  * CArgs library struct with options and documentation.
  */
 static struct cag_option options[] = {
+    {.identifier = 'L',
+     .access_letters = "L",
+     .access_name = "linear",
+     .value_name = NULL,
+     .description = "Print linear output rather than block."},
+
     {.identifier = 'v',
      .access_letters = "v",
      .access_name = "version",
@@ -241,7 +247,6 @@ void getPaths(dir_list_s *paths)
 
     while ( cursor ) {
         getDirStats(cursor);
-        Dprint("%s", cursor->dir);
         cursor = cursor->next;
     }
 }
@@ -272,7 +277,7 @@ char *pl(int *cnt, char *p, enum action act)
  * directories, and the directory entry statistics structure and
  * collates the statistics into a single output block.
  */
-void collateOutput()
+void blockOutput()
 {
     char *c = malloc(sizeof(char));
 
@@ -288,14 +293,66 @@ void collateOutput()
     printf("%8d:unknown file type%s\n",      de.d_unk, pl(&de.d_unk, c, add));
 
     free(c);
-    displayOutput();
+}
+
+/**
+ * Print decorations for linear output.
+ */
+void printDeco()
+{
+    int i = 0, j = 0;
+
+    for ( i = 0 ; i < 8 ; ++i ) {
+        printf("+");
+        for ( j = 0 ; j < 8 ; ++j ) {
+            printf("-");
+        }
+    }
+    printf("+\n");
+}
+/**
+ * Displays output in a linear, continuous, and/or CSV format.
+ */
+void lineOutput()
+{
+    int i = 0;
+    char *ft[8] = {"Regulr", "Dir", "Link", "Block",
+                   "Char", "FIFO", "Socket", "WhtOut"};
+
+    /// Header line.
+    printDeco();
+    printf("|");
+    for ( i = 0 ; i < 8 ; ++i ) {
+        printf("%7s |", ft[i]);
+    }
+    printf("\n");
+    printDeco();
+
+    printf("|%7d |%7d |%7d |%7d |%7d |%7d |%7d |%7d |\n",
+           de.d_reg, de.d_dir, de.d_lnk, de.d_blk,
+           de.d_chr, de.d_fif, de.d_sok, de.d_wht);
+    printDeco();
 }
 
 /**
  * Print output(s) to the requested channel(s) in the requested format(s).
  */
-int displayOutput()
+int displayOutput(dir_list_s *paths)
 {
+    dir_node_s *cursor = paths->head;
+
+    printf("Directories:\n");
+    while ( cursor ) {
+        printf("\t%s\n", cursor->dir);
+        cursor = cursor->next;
+    }
+
+    if ( opt.lin ) {
+        lineOutput();
+    } else {
+        blockOutput();
+    }
+
     return 0;
 }
 
@@ -312,12 +369,9 @@ int main(int argc, char *argv[])
 
     while (cag_option_fetch(&context)) {
         switch (cag_option_get_identifier(&context)) {
-        case 'h':
-            printf("Usage: dstat [OPTION]... DIRECTORY...\n");
-            printf("Quickly gathers and reports the numbers of various file ");
-            printf("types under a\ndirectory or filesystem.\n\n");
-            cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
-            exit(EXIT_SUCCESS);
+        case 'L':
+            opt.lin = true;
+            break;
         case 'v':
             printf("%s %s\n", PROGNAME, VERSION);
             exit(EXIT_SUCCESS);
@@ -326,6 +380,12 @@ int main(int argc, char *argv[])
             printf("Git commit ID: %s\n", COMMIT);
             printf("%s\n", AUTHOR);
             printf("%s\n", DATE);
+            exit(EXIT_SUCCESS);
+        case 'h':
+            printf("Usage: dstat [OPTION]... DIRECTORY...\n");
+            printf("Quickly gathers and reports the numbers of various file ");
+            printf("types under a\ndirectory or filesystem.\n\n");
+            cag_option_print(options, CAG_ARRAY_SIZE(options), stdout);
             exit(EXIT_SUCCESS);
         case '?':
             cag_option_print_error(&context, stdout);
@@ -357,6 +417,6 @@ int main(int argc, char *argv[])
     }
 
     getPaths(dir_list);
-    collateOutput();
+    displayOutput(dir_list);
     exit(errno);
 }
