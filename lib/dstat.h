@@ -32,6 +32,21 @@
 /*************************************************************************/
 
 /**
+ * All the libraries that are fit to print.
+ * Note non-standard github.com:likle/cargs.git
+ */
+#include <cargs.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+/**
  * Define this as the DStat header file. For when only the most verbose
  * will do.
  */
@@ -73,13 +88,16 @@
  * Separate structure for passing selected options to functions.
  */
 struct sel_opts_s {
-    bool upd; // continuous update option
-    bool lin; // display line output rather than descriptive block
-    bool qit; // quite mode; no header lines on line output
-    bool out; // send output to a file
-    bool log; // send errors to a log file
-    char *outfile; // name of output file
-    char *logfile; // name of log file
+    bool upd;       /// continuous update option
+    bool lin;       /// display line output rather than descriptive block
+    bool qit;       /// quite mode; no header lines on line output
+    bool out;       /// send output to a file
+    bool log;       /// send errors to a log file
+    char *outfile;  /// name of output file
+    char *logfile;  /// name of log file
+    FILE *OUTFILE;  /// file descriptor for output file
+    FILE *LOGFILE;  /// file descriptor for log file
+    char *FILEOPTS; /// placeholder for file handling options
 };
 
 /**

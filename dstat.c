@@ -32,20 +32,10 @@
 /*************************************************************************/
 
 /**
- * Note non-standard github.com:likle/cargs.git
+ * Import everything else in <dstat.h>.
  */
 #include "lib/dstat.h"
 #include "lib/version.h"
-#include <cargs.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/errno.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include <unistd.h>
 
 /**
  * Comparison strings for not descending into ourselves.
@@ -63,6 +53,12 @@ static struct cag_option options[] = {
      .access_name = "linear",
      .value_name = NULL,
      .description = "Print linear output rather than block."},
+
+    {.identifier = 'l',
+     .access_letters = "l",
+     .access_name = "logfile",
+     .value_name = "LOGFILE",
+     .description = "Do not halt on non-fatal errors but log them to LOGFILE."},
 
     {.identifier = 'v',
      .access_letters = "v",
@@ -88,7 +84,9 @@ struct sel_opts_s opt = {
     // Default values for sel_opts{}.
     .upd = false, .lin = false, .qit = false,
     .out = false, .log = false,
-    .outfile = "", .logfile = ""
+    .outfile = "", .logfile = "",
+    .OUTFILE = NULL, .LOGFILE = NULL,
+    .FILEOPTS =  "a" // O_WRONLY | O_CREAT | O_APPEND
 };
 
 /**
@@ -186,12 +184,28 @@ void addDir(dir_list_s *paths, dir_node_s *dir_node, char *path_arg)
         dir_node_s *next = paths->head;
         paths->head = dir_node;
         dir_node->next = next;
-
         paths->num_dirs++;
         Dprint("num_dirs: %d", paths->num_dirs);
     } else {
         Dprint("errno: %d", errno);
-        perror(path_arg);
+        if ( opt.log ) {
+            if ( errno == 0 ) errno = ENOENT;
+            char *errstring = malloc(MAXPATHLEN + 82);
+            asprintf(&errstring, "%s: %s\n", strerror(errno), path_arg);
+
+            if ( (fprintf(opt.LOGFILE, errstring, sizeof(errstring))) < 1 ) {
+                Dprint("failed logging to %s...", opt.logfile);
+                perror(opt.logfile);
+                exit(EXIT_FAILURE);
+            }
+
+            free(errstring);
+            errno = 0;
+        } else {
+            Dprint("opt.log: %i", opt.log);
+            perror(path_arg);
+            exit(EXIT_FAILURE);
+        }
     }
 }
 
@@ -372,6 +386,22 @@ int main(int argc, char *argv[])
         case 'L':
             opt.lin = true;
             break;
+        case 'l':
+            opt.log = true;
+            if ( cag_option_get_value(&context) ) {
+                opt.logfile = (char *)cag_option_get_value(&context);
+                opt.LOGFILE = fopen(opt.logfile, opt.FILEOPTS);
+                if ( ! opt.LOGFILE ) {
+                    Dprint("NULL FILE *opt.logfile: %s", opt.logfile);
+                    perror(opt.logfile);
+                    exit(EXIT_FAILURE);
+                }
+            } else {
+                errno = EINVAL;
+                perror("-L/--logfile must supply valid LOGFILE");
+                exit(EXIT_FAILURE);
+            }
+            break;
         case 'v':
             printf("%s %s\n", PROGNAME, VERSION);
             exit(EXIT_SUCCESS);
@@ -418,5 +448,7 @@ int main(int argc, char *argv[])
 
     getPaths(dir_list);
     displayOutput(dir_list);
+    if ( opt.out ) fclose(opt.OUTFILE);
+    if ( opt.log ) fclose(opt.LOGFILE);
     exit(errno);
 }
