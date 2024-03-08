@@ -2,8 +2,8 @@
 title: DSTAT
 section: 1
 header: User Manual
-footer: 0.6.1-pre-release
-date: Mar 5 2024
+footer: 0.6.2-pre-release
+date: Mar 8 2024
 ---
 # NAME
 dstat - Quickly gather and print directory statistics.
