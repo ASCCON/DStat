@@ -54,6 +54,18 @@ static struct cag_option options[] = {
      .value_name = NULL,
      .description = "Print linear output rather than block."},
 
+    {.identifier = 'q',
+     .access_letters = "q",
+     .access_name = "quiet",
+     .value_name = NULL,
+     .description = "."},
+
+    {.identifier = 'o',
+     .access_letters = "o",
+     .access_name = "output",
+     .value_name = "OUTFILE",
+     .description = "Print directory list and accumulated stats to OUTFILE."},
+
     {.identifier = 'l',
      .access_letters = "l",
      .access_name = "logfile",
@@ -187,9 +199,9 @@ void addDir(dir_list_s *paths, dir_node_s *dir_node, char *path_arg)
         paths->num_dirs++;
         Dprint("num_dirs: %d", paths->num_dirs);
     } else {
-        Dprint("errno: %d", errno);
+        if ( errno == 0 ) errno = ENOENT;
+
         if ( opt.log ) {
-            if ( errno == 0 ) errno = ENOENT;
             char *errstring = malloc(MAXPATHLEN + 82);
             asprintf(&errstring, "%s: %s\n", strerror(errno), path_arg);
 
@@ -200,9 +212,7 @@ void addDir(dir_list_s *paths, dir_node_s *dir_node, char *path_arg)
             }
 
             free(errstring);
-            errno = 0;
         } else {
-            Dprint("opt.log: %i", opt.log);
             perror(path_arg);
             exit(EXIT_FAILURE);
         }
@@ -293,19 +303,40 @@ char *pl(int *cnt, char *p, enum action act)
  */
 void blockOutput()
 {
+    char *b = malloc(512);
     char *c = malloc(sizeof(char));
 
-    printf("Totals:\n");
-    printf("%8d:director%s\n",               de.d_dir, pl(&de.d_dir, c, rep));
-    printf("%8d:FIFO file%s\n",              de.d_fif, pl(&de.d_fif, c, add));
-    printf("%8d:character special file%s\n", de.d_chr, pl(&de.d_chr, c, add));
-    printf("%8d:block special file%s\n",     de.d_blk, pl(&de.d_blk, c, add));
-    printf("%8d:regular file%s\n",           de.d_reg, pl(&de.d_reg, c, add));
-    printf("%8d:symlink%s\n",                de.d_lnk, pl(&de.d_lnk, c, add));
-    printf("%8d:socket%s\n",                 de.d_sok, pl(&de.d_sok, c, add));
-    printf("%8d:union whiteout file%s\n",    de.d_wht, pl(&de.d_wht, c, add));
-    printf("%8d:unknown file type%s\n",      de.d_unk, pl(&de.d_unk, c, add));
+    asprintf(&b, "Totals:\n");
+    asprintf(&b, "%s%8d:director%s\n",               b, de.d_dir,
+             pl(&de.d_dir, c, rep));
+    asprintf(&b, "%s%8d:FIFO file%s\n",              b, de.d_fif,
+             pl(&de.d_fif, c, add));
+    asprintf(&b, "%s%8d:character special file%s\n", b, de.d_chr,
+             pl(&de.d_chr, c, add));
+    asprintf(&b, "%s%8d:block special file%s\n",     b, de.d_blk,
+             pl(&de.d_blk, c, add));
+    asprintf(&b, "%s%8d:regular file%s\n",           b, de.d_reg,
+             pl(&de.d_reg, c, add));
+    asprintf(&b, "%s%8d:symlink%s\n",                b, de.d_lnk,
+             pl(&de.d_lnk, c, add));
+    asprintf(&b, "%s%8d:socket%s\n",                 b, de.d_sok,
+             pl(&de.d_sok, c, add));
+    asprintf(&b, "%s%8d:union whiteout file%s\n",    b, de.d_wht,
+             pl(&de.d_wht, c, add));
+    asprintf(&b, "%s%8d:unknown file type%s\n",      b, de.d_unk,
+             pl(&de.d_unk, c, add));
 
+    if ( opt.out ) {
+        if ( (fprintf(opt.OUTFILE, b, sizeof(b))) < 1 ) {
+            Dprint("failed writing to %s...", opt.outfile);
+            perror(opt.outfile);
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        printf("%s", b);
+    }
+
+    free(b);
     free(c);
 }
 
@@ -329,23 +360,42 @@ void printDeco()
  */
 void lineOutput()
 {
-    int i = 0;
-    char *ft[8] = {"Regulr", "Dir", "Link", "Block",
-                   "Char", "FIFO", "Socket", "WhtOut"};
+    int i           = 0;
+    int values[8]   = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk,
+                       de.d_chr, de.d_fif, de.d_sok, de.d_wht};
+    char *header[8] = {"Regulr", "Dir", "Link", "Block",
+                       "Char", "FIFO", "Socket", "WhtOut"};
 
-    /// Header line.
-    printDeco();
-    printf("|");
-    for ( i = 0 ; i < 8 ; ++i ) {
-        printf("%7s |", ft[i]);
+    /// Print decoration if not in quiet-mode.
+    if ( ! opt.qit ) {
+        printDeco();
+        printf("|");
+
+        for ( i = 0 ; i < 8 ; ++i ) {
+            printf("%7s |", header[i]);
+        }
+
+        printf("\n");
+        printDeco();
+        printf("|");
     }
-    printf("\n");
-    printDeco();
 
-    printf("|%7d |%7d |%7d |%7d |%7d |%7d |%7d |%7d |\n",
-           de.d_reg, de.d_dir, de.d_lnk, de.d_blk,
-           de.d_chr, de.d_fif, de.d_sok, de.d_wht);
-    printDeco();
+    /// Print the values with decoration or as CSV.
+    for ( i = 0 ; i < 8 ; ++i ) {
+        if ( opt.qit ) {
+            printf("%d,", values[i]);
+        } else {
+            printf("%7d |", values[i]);
+        }
+    }
+
+    /// Clean up decorations and/or CSV after printing values.
+    if ( opt.qit ) {
+        printf("\b \b\n");
+    } else {
+        printf("\n");
+        printDeco();
+    }
 }
 
 /**
@@ -354,11 +404,22 @@ void lineOutput()
 int displayOutput(dir_list_s *paths)
 {
     dir_node_s *cursor = paths->head;
+    char *dir_line     = malloc(MAXPATHLEN * paths->num_dirs);
 
-    printf("Directories:\n");
+    asprintf(&dir_line, "Directories:\n");
     while ( cursor ) {
-        printf("\t%s\n", cursor->dir);
+        asprintf(&dir_line, "%s\t%s\n", dir_line, cursor->dir);
         cursor = cursor->next;
+    }
+
+    if ( ! opt.qit ) printf("%s", dir_line);
+
+    if ( opt.out ) {
+        if ( (fprintf(opt.OUTFILE, dir_line, sizeof(dir_line))) < 1 ) {
+            Dprint("failed logging to %s...", opt.logfile);
+            perror(opt.logfile);
+            exit(EXIT_FAILURE);
+        }
     }
 
     if ( opt.lin ) {
@@ -366,6 +427,8 @@ int displayOutput(dir_list_s *paths)
     } else {
         blockOutput();
     }
+
+    free(dir_line);
 
     return 0;
 }
@@ -385,6 +448,25 @@ int main(int argc, char *argv[])
         switch (cag_option_get_identifier(&context)) {
         case 'L':
             opt.lin = true;
+            break;
+        case 'q':
+            opt.qit = true;
+            break;
+        case 'o':
+            opt.out = true;
+            if ( cag_option_get_value(&context) ) {
+                opt.outfile = (char *)cag_option_get_value(&context);
+                opt.OUTFILE = fopen(opt.outfile, opt.FILEOPTS);
+                if ( ! opt.OUTFILE ) {
+                    Dprint("NULL FILE *opt.outfile: %s", opt.outfile);
+                    perror(opt.outfile);
+                    exit(EXIT_FAILURE);
+                }
+            } else {
+                errno = EINVAL;
+                perror("-o/--outfile must supply valid OUTFILE");
+                exit(EXIT_FAILURE);
+            }
             break;
         case 'l':
             opt.log = true;
