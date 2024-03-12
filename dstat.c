@@ -117,6 +117,7 @@ struct dir_ent_s de = {
     .d_fif = 0, .d_chr = 0, .d_dir = 0,
     .d_blk = 0, .d_reg = 0, .d_lnk = 0,
     .d_sok = 0, .d_wht = 0, .d_unk = 0,
+    .num_hdr = 0,
     .fqdp = NULL
 };
 
@@ -402,7 +403,7 @@ void blockOutput(dir_list_s *paths, enum action act)
 void csvOutput(dir_list_s *paths, enum action act)
 {
     int          i = 0;
-    int  values[8] = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk,
+    int   values[] = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk,
                       de.d_chr, de.d_fif, de.d_sok, de.d_wht};
     char        *c = malloc(sizeof(char));
     char *csv_list = malloc(sizeof(STAT_HDR) + 1024);
@@ -415,14 +416,14 @@ void csvOutput(dir_list_s *paths, enum action act)
             asprintf(&csv_list, "%s%s\n", csv_list, opt.list[i]);
         }
 
-        for ( i = 0 ; i < 8 ; ++i ) {
+        for ( i = 0 ; i < de.num_hdr ; ++i ) {
             asprintf(&csv_list, "%s%s,", csv_list, STAT_HDR[i]);
         }
         asprintf(&csv_list, "%s\b \n", csv_list); /// Remove trailing comma.
     }
 
     /// Push the corresponding values to the memory block.
-    for ( i = 0 ; i < 8 ; ++i ) {
+    for ( i = 0 ; i < de.num_hdr ; ++i ) {
         asprintf(&csv_list, "%s%d,", csv_list, values[i]);
     }
     asprintf(&csv_list, "%s\b \n", csv_list); /// Remove trailing comma.
@@ -447,9 +448,9 @@ void printDeco()
 {
     int i = 0, j = 0;
 
-    for ( i = 0 ; i < 8 ; ++i ) {
+    for ( i = 0 ; i < de.num_hdr ; ++i ) {
         printf("+");
-        for ( j = 0 ; j < 8 ; ++j ) {
+        for ( j = 0 ; j < de.num_hdr ; ++j ) {
             printf("-");
         }
     }
@@ -460,11 +461,12 @@ void printDeco()
  */
 void lineOutput(dir_list_s *paths, enum action act)
 {
-    int i         = 0;
-    int values[8] = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk,
-                     de.d_chr, de.d_fif, de.d_sok, de.d_wht};
+    int i        = 0;
+    int values[] = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk,
+                    de.d_chr, de.d_fif, de.d_sok, de.d_wht};
 
     if ( act == non ) {
+        // stub for continuous output mode, `cnt`
         Dprint("%s", "act is non");
     }
 
@@ -475,7 +477,7 @@ void lineOutput(dir_list_s *paths, enum action act)
         printDeco();
         printf("|");
 
-        for ( i = 0 ; i < 8 ; ++i ) {
+        for ( i = 0 ; i < de.num_hdr ; ++i ) {
             printf("%7s |", STAT_HDR[i]);
         }
 
@@ -485,7 +487,7 @@ void lineOutput(dir_list_s *paths, enum action act)
 
     /// Print the values with decoration.
     printf("|");
-    for ( i = 0 ; i < 8 ; ++i ) {
+    for ( i = 0 ; i < de.num_hdr ; ++i ) {
         printf("%7d |", values[i]);
     }
     printf("\n");
@@ -527,6 +529,9 @@ int displayOutput(dir_list_s *paths)
  */
 int main(int argc, char *argv[])
 {
+    /// Initialise any starting variables not set at compile-time.
+    de.num_hdr = sizeof(STAT_HDR) / sizeof(STAT_HDR[0]);
+
     /// Initialise, read, and set the various user options.
     int param_index = 0;
     cag_option_context context;
