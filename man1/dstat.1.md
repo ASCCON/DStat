@@ -2,7 +2,7 @@
 title: DSTAT
 section: 1
 header: User Manual
-footer: 0.6.3-pre-release
+footer: 0.6.3-pre-release-1-g42c4e07
 date: Mar 11 2024
 ---
 # NAME
@@ -64,23 +64,19 @@ Count updates are printed on a single line, updated inline, unless the `-L` /
 statistical data (see EXAMPLES). When explicitly specified with the `-c` /
 `--continuous` option, count updates are printed on new lines.
 
+**-C**, **---csv***
+: Prints CSV-formatted output. With the `-o`/`--output` options (see below),
+writes CSV output to the named output file. Has no effect without `-o` flag
+if either `-c` or `-L` flags are also specified.
+
 **-q**, **---quiet**
-: Do not print the directory list in default output mode. With `-c` _or_ `-L`
-flags, prints the header line without decoration. With `-c` _and_ `-L` flags,
-continuous updates are updated as new lines in CSV format. Statistics are
-printed as:
-
-> header item, header item, ...
-
-> `DT_TYPE`:num, `DT_TYPE`:num, ...
-
-> `DT_TYPE`:num, `DT_TYPE`:num, ...
+: Do not print the directory list in default output ("block") mode. With
+`-c`, `-C`, and/or `-L` flags, only prints the accumulated statistical counts
+without directory or header lines.
 
 **-o**, **---outfile** [*OUTFILE*]
-: Send the default output to the named `[OUTFILE]`. The output file always 
-includes directory/ies supplied and explanatory block output text statistcs, 
-regardless of other output format control flags. Note that this flag may be 
-used _in addition_ to aforementioned output format- control flags; this
+: Send the default output to the named `[OUTFILE]`. Note that this flag may
+be used _in addition_ to aforementioned output format- control flags; this
 implies opening `[OUTFILE]` on start, final population of `[OUTFILE]` prior to
 termination, and output to `STDOUT` following the output format flags.
 
@@ -117,6 +113,14 @@ logging such to the logfile (in this case, `/tmp/dstat.log`). In particular,
 continuously follow the output (via `STDOUT`) for scanning the `/bigdata`
 directory. Summary output is sent to an output file, here `/tmp/dstat.out`.
 
+**dstat --linear --csv --outfile=/tmp/outfile.csv /bigdata**
+: Print statistics for the `/bigdata` filesystem as a formatted line to
+`stdout` with the same information written to `/tmp/outfile.csv` in CSV format.
+
+**dstat --quiet --csv --outfile=/tmp/outfile.csv /bigdata**
+: Update the `/tmp/outfile.csv` output file with the latest statistics from the
+`/bigdata` filesystem.
+
 **dstat ---logfile /dev/null /data /bigdata**
 : Print statistics on the `/data` and `/bigdata` filesystems ignoring any non-
 fatal errors.
@@ -150,10 +154,7 @@ SOFTWARE.
 
 
 # BUGS
-- Formatting options are hit 'n' miss.
-
-- Directory recursion also only works one-level deep before returning an 
-error.
+- There is currently not a timestamp function for updating output files.
 
 - Although this is most likely to be used on GNU/Linux clusters running a
 BigData Platform (e.g Apache Hadoop, <https://hadoop.apache.org>), current

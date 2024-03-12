@@ -90,6 +90,7 @@
 struct sel_opts_s {
     bool upd;       /// continuous update option
     bool lin;       /// display line output rather than descriptive block
+    bool csv;       /// output to CSV format either to CLI or `-o OUTFILE`
     bool qit;       /// quite mode; no header lines on line output
     bool out;       /// send output to a file
     bool log;       /// send errors to a log file
@@ -98,6 +99,7 @@ struct sel_opts_s {
     FILE *OUTFILE;  /// file descriptor for output file
     FILE *LOGFILE;  /// file descriptor for log file
     char *FILEOPTS; /// placeholder for file handling options
+    char *list[];   /// placeholder for massaging a directory list
 };
 
 /**
@@ -111,6 +113,13 @@ struct dir_ent_s {
     int d_fif, d_chr, d_dir, d_blk, d_reg, d_lnk, d_sok, d_wht, d_unk;
     char *fqdp;
 };
+
+/**
+ * The nominal list of file types available from dirent.h entries that will
+ * be displayed, in a sensible order.
+ */
+char *STAT_HDR[8] = {"Regulr", "Dir", "Link", "Block",
+                     "Char", "FIFO", "Socket", "WhtOut"};
 
 /**
  * The following structs and function declarations enable the linked-list
@@ -148,13 +157,15 @@ void getDirStats(dir_node_s *dir_node);
 
 /**
  * The `action` enum is generic for functions needing extra direction.
- * The `add` action tells `pl()` to add an _s_ to "pluralise" a string.
- * The `rep` action tells `pl()` to replace either a _y_ (singular) or _ies_
- * (plural) as appropriate to the calling string.
  */
 enum action {
-    add = 0,
-    rep
+    non = 0, /// tells ay receiving function to ignore this parameter.
+    add,     /// `pl()` adds an _s_ to "pluralise" a string.
+    rep,     /// `pl()` replaces either a _y_ (singular) or _ies_ (plural)
+    reg,     /// tells receiving functions to print in "regular" format.
+    csv,     /// tells receiving functions to print in "CSV" format.
+    prt,     /// tells receiving functions to _only_ print output to `STDOUT`.
+    wrt      /// tells receiving functions to _only_ write output to `OUTFILE`.
 };
 
 /**
@@ -162,7 +173,7 @@ enum action {
  * strings. Takes an `int` of how many things in question and a pointer to
  * `char` where the appropriate character(s) will be populated or nulled.
  */
-char *pl(int *cnt, char *s, enum action act);
+char *pl(int *cnt, char *c, enum action act);
 
 /**
  * Test directory, identified by pointer to const char, prior to further action.
@@ -170,11 +181,17 @@ char *pl(int *cnt, char *s, enum action act);
 bool testDir(char *dir);
 
 /**
- * Takes the number of input directories, a pointer to the list of
+ * Reads the number of input directories, a pointer to the list of
  * directories, and the directory entry statistics structure and
  * collates the statistics into a single output block.
  */
-void blockOutput();
+void blockOutput(dir_list_s *paths, enum action act);
+
+/**
+ * Reads the  header and directory values and prints CSV-
+ * formatted output to `STDOUT` or to the `-o OUTFILE`, if specified.
+ */
+void csvOutput(dir_list_s *paths, enum action act);
 
 /**
  * Print decorations for linear output.
@@ -184,7 +201,12 @@ void printDeco();
 /**
  * Displays output in a linear, continuous, and/or CSV format.
  */
-void lineOutput();
+void lineOutput(dir_list_s *paths, enum action act);
+
+/**
+ * Populate a `list[]` with the directories to be output.
+ */
+void getDirList(dir_list_s *paths, enum action fmt);
 
 /**
  * Print output(s) to the requested channel(s) in the requested format(s).

@@ -54,11 +54,17 @@ static struct cag_option options[] = {
      .value_name = NULL,
      .description = "Print linear output rather than block."},
 
+    {.identifier = 'C',
+     .access_letters = "C",
+     .access_name = "csv",
+     .value_name = NULL,
+     .description = "Output to CSV format."},
+
     {.identifier = 'q',
      .access_letters = "q",
      .access_name = "quiet",
      .value_name = NULL,
-     .description = "."},
+     .description = "Do not print list of directories or header information."},
 
     {.identifier = 'o',
      .access_letters = "o",
@@ -94,11 +100,12 @@ static struct cag_option options[] = {
  */
 struct sel_opts_s opt = {
     // Default values for sel_opts{}.
-    .upd = false, .lin = false, .qit = false,
-    .out = false, .log = false,
+    .upd = false, .lin = false, .csv = false,
+    .qit = false, .out = false, .log = false,
     .outfile = "", .logfile = "",
     .OUTFILE = NULL, .LOGFILE = NULL,
-    .FILEOPTS =  "a" // O_WRONLY | O_CREAT | O_APPEND
+    .FILEOPTS =  "a", // O_WRONLY | O_CREAT | O_APPEND
+    .list = {}
 };
 
 /**
@@ -276,6 +283,42 @@ void getPaths(dir_list_s *paths)
 }
 
 /**
+ * Populate a `list[]` with the directories to be output.
+ * `fmt` action specifies whether to:
+ *       + `csv`: Print CSV format to `STDOUT`.
+ *       + `reg`: Print "regular" format to `STDOUT`.
+ *       + `non`: Write the list of directories to `de.list[]`.
+ */
+void getDirList(dir_list_s *paths, enum action fmt)
+{
+    dir_node_s *cursor = paths->head;
+    char            *c = malloc(sizeof(char));
+    int              i = 0;
+
+    if ( fmt == csv ) {
+        printf("Director%s\n", pl(&paths->num_dirs, c, rep));
+    } else if ( fmt == reg ) {
+        printf("Director%s:\n", pl(&paths->num_dirs, c, rep));
+    }
+
+    while ( cursor ) {
+        if ( fmt == reg ) {
+            printf("\t%s\n", cursor->dir);
+        } else if ( fmt == csv ) {
+            printf("%s\n", cursor->dir);
+        } else if ( fmt == non ) {
+            opt.list[i] = cursor->dir;
+            ++i;
+        } else {
+            errno = EINVAL;
+            perror("fmt: incorrect parameter usage");
+            exit(errno);
+        }
+        cursor = cursor->next;
+    }
+}
+
+/**
  * Decides whether to add an "s"/"ies" to indicate singular or plural on output
  * strings. Takes an `int` of how many things in question and a pointer to
  * `char` where the appropriate character(s) will be populated or nulled.
@@ -297,16 +340,27 @@ char *pl(int *cnt, char *p, enum action act)
 }
 
 /**
- * Takes the number of input directories, a pointer to the list of
+ * Reads the number of input directories, a pointer to the list of
  * directories, and the directory entry statistics structure and
  * collates the statistics into a single output block.
  */
-void blockOutput()
+void blockOutput(dir_list_s *paths, enum action act)
 {
-    char *b = malloc(512);
+    char *b = malloc((MAXPATHLEN * paths->num_dirs) + 1024);
     char *c = malloc(sizeof(char));
+    int   i = 0;
 
-    asprintf(&b, "Totals:\n");
+    if ( ! opt.qit ) {
+        getDirList(paths, non);
+        asprintf(&b, "Director%s:\n", pl(&paths->num_dirs, c, rep));
+
+        for ( i = 0 ; i < paths->num_dirs ; ++i ) {
+            asprintf(&b, "%s\t%s\n", b, opt.list[i]);
+        }
+
+        asprintf(&b, "%s\nTotals:\n", b);
+    }
+
     asprintf(&b, "%s%8d:director%s\n",               b, de.d_dir,
              pl(&de.d_dir, c, rep));
     asprintf(&b, "%s%8d:FIFO file%s\n",              b, de.d_fif,
@@ -326,7 +380,7 @@ void blockOutput()
     asprintf(&b, "%s%8d:unknown file type%s\n",      b, de.d_unk,
              pl(&de.d_unk, c, add));
 
-    if ( opt.out ) {
+    if ( act == wrt ) {
         if ( (fprintf(opt.OUTFILE, b, sizeof(b))) < 1 ) {
             Dprint("failed writing to %s...", opt.outfile);
             perror(opt.outfile);
@@ -338,6 +392,52 @@ void blockOutput()
 
     free(b);
     free(c);
+}
+
+/**
+ * Reads the number of input directories, a pointer to the list of
+ * directories, and the directory entry statistics structure and
+ * collates the statistics into a single output block.
+ */
+void csvOutput(dir_list_s *paths, enum action act)
+{
+    int          i = 0;
+    int  values[8] = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk,
+                      de.d_chr, de.d_fif, de.d_sok, de.d_wht};
+    char        *c = malloc(sizeof(char));
+    char *csv_list = malloc(sizeof(STAT_HDR) + 1024);
+
+    /// Add directory list and header if not in quiet-mode.
+    if ( ! opt.qit ) {
+        getDirList(paths, non);
+        asprintf(&csv_list, "Director%s\n", pl(&paths->num_dirs, c, rep));
+        for ( i = 0 ; i < paths->num_dirs ; ++i ) {
+            asprintf(&csv_list, "%s%s\n", csv_list, opt.list[i]);
+        }
+
+        for ( i = 0 ; i < 8 ; ++i ) {
+            asprintf(&csv_list, "%s%s,", csv_list, STAT_HDR[i]);
+        }
+        asprintf(&csv_list, "%s\b \n", csv_list); /// Remove trailing comma.
+    }
+
+    /// Push the corresponding values to the memory block.
+    for ( i = 0 ; i < 8 ; ++i ) {
+        asprintf(&csv_list, "%s%d,", csv_list, values[i]);
+    }
+    asprintf(&csv_list, "%s\b \n", csv_list); /// Remove trailing comma.
+
+    if ( act == wrt ) {
+        if ( (fprintf(opt.OUTFILE, csv_list, sizeof(csv_list))) < 1 ) {
+            Dprint("failed writing to %s...", opt.outfile);
+            perror(opt.outfile);
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        printf("%s", csv_list);
+    }
+
+    free(csv_list);
 }
 
 /**
@@ -358,42 +458,40 @@ void printDeco()
 /**
  * Displays output in a linear, continuous, and/or CSV format.
  */
-void lineOutput()
+void lineOutput(dir_list_s *paths, enum action act)
 {
-    int i           = 0;
-    int values[8]   = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk,
-                       de.d_chr, de.d_fif, de.d_sok, de.d_wht};
-    char *header[8] = {"Regulr", "Dir", "Link", "Block",
-                       "Char", "FIFO", "Socket", "WhtOut"};
+    int i         = 0;
+    int values[8] = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk,
+                     de.d_chr, de.d_fif, de.d_sok, de.d_wht};
+
+    if ( act == non ) {
+        Dprint("%s", "act is non");
+    }
 
     /// Print decoration if not in quiet-mode.
     if ( ! opt.qit ) {
+        getDirList(paths, reg);
+
         printDeco();
         printf("|");
 
         for ( i = 0 ; i < 8 ; ++i ) {
-            printf("%7s |", header[i]);
+            printf("%7s |", STAT_HDR[i]);
         }
 
         printf("\n");
         printDeco();
-        printf("|");
     }
 
-    /// Print the values with decoration or as CSV.
+    /// Print the values with decoration.
+    printf("|");
     for ( i = 0 ; i < 8 ; ++i ) {
-        if ( opt.qit ) {
-            printf("%d,", values[i]);
-        } else {
-            printf("%7d |", values[i]);
-        }
+        printf("%7d |", values[i]);
     }
+    printf("\n");
 
-    /// Clean up decorations and/or CSV after printing values.
-    if ( opt.qit ) {
-        printf("\b \b\n");
-    } else {
-        printf("\n");
+    /// Clean up output decorations.
+    if ( ! opt.qit ) {
         printDeco();
     }
 }
@@ -403,34 +501,25 @@ void lineOutput()
  */
 int displayOutput(dir_list_s *paths)
 {
-    dir_node_s *cursor = paths->head;
-    char *dir_line     = malloc(MAXPATHLEN * paths->num_dirs);
-
-    asprintf(&dir_line, "Directories:\n");
-    while ( cursor ) {
-        asprintf(&dir_line, "%s\t%s\n", dir_line, cursor->dir);
-        cursor = cursor->next;
+    /// Print output as appropriate to `STDOUT`.
+    if ( ( opt.lin && ! opt.csv ) || ( opt.lin && opt.csv && opt.out ) ) {
+        lineOutput(paths, prt);
+    } else if ( opt.csv && ! opt.lin && ! opt.out ) {
+        csvOutput(paths, prt);
+    } else {
+        blockOutput(paths, prt);
     }
 
-    if ( ! opt.qit ) printf("%s", dir_line);
-
+    /// Write to the output file in the selected format if requested.
     if ( opt.out ) {
-        if ( (fprintf(opt.OUTFILE, dir_line, sizeof(dir_line))) < 1 ) {
-            Dprint("failed logging to %s...", opt.logfile);
-            perror(opt.logfile);
-            exit(EXIT_FAILURE);
+        if ( opt.csv ) {
+            csvOutput(paths, wrt);
+        } else {
+            blockOutput(paths, wrt);
         }
     }
 
-    if ( opt.lin ) {
-        lineOutput();
-    } else {
-        blockOutput();
-    }
-
-    free(dir_line);
-
-    return 0;
+    return errno;
 }
 
 /**
@@ -448,6 +537,9 @@ int main(int argc, char *argv[])
         switch (cag_option_get_identifier(&context)) {
         case 'L':
             opt.lin = true;
+            break;
+        case 'C':
+            opt.csv = true;
             break;
         case 'q':
             opt.qit = true;
@@ -506,10 +598,10 @@ int main(int argc, char *argv[])
     }
 
     /// Initialise the variables and linked list for storing directory paths.
-    dp_name *dir_path = NULL;
+    dp_name    *dir_path = NULL;
     dir_node_s *dir_node = NULL;
     dir_list_s *dir_list = createDirList();
-    int dir_cnt = 0;
+    int          dir_cnt = 0;
 
     /// Loop over all non-option arguments (directory paths or junk data)
     /// and add valid paths to the linked-list.
