@@ -2,7 +2,7 @@
 title: DSTAT
 section: 1
 header: User Manual
-footer: 0.6.4-pre-release
+footer: 0.6.5-pre-release
 date: Mar 12 2024
 ---
 # NAME
