@@ -85,6 +85,27 @@
 #define MAXPATHLEN __DARWIN_MAXPATHLEN
 
 /**
+ * The nominal list of file types available from dirent.h entries that will
+ * be displayed, in a sensible order. This, along with `dir_ent_s{}`, below,
+ * should be updated to match your target OS/filesystem dirent.h.
+ */
+char *STAT_HDR[] = {"Regulr", "Dir", "Link", "Block",
+                    "Char", "FIFO", "Socket", "WhtOut"};
+
+/**
+ * This structure holds the variables and pointers for adding dirent.h
+ * statistical entries. It can also hold the following optional or
+ * temporary parameters:
+ *   - `char *fqdp` : A fully-qualified directory path string for passing
+ *                    to the `struct dir_node{}`.
+ */
+struct dir_ent_s {
+    int  d_fif, d_chr, d_dir, d_blk, d_reg, d_lnk, d_sok, d_wht, d_unk;
+    int  num_hdr;
+    char *fqdp;
+};
+
+/**
  * Separate structure for passing selected options to functions.
  */
 struct sel_opts_s {
@@ -101,25 +122,6 @@ struct sel_opts_s {
     char *FILEOPTS; /// placeholder for file handling options
     char *list[];   /// placeholder for massaging a directory list
 };
-
-/**
- * This structure holds the variables and pointers for adding dirent.h
- * statistical entries. It can also hold the following optional or
- * temporary parameters:
- *   - `char *fqdp` : A fully-qualified directory path string for passing
- *                    to the `struct dir_node{}`.
- */
-struct dir_ent_s {
-    int d_fif, d_chr, d_dir, d_blk, d_reg, d_lnk, d_sok, d_wht, d_unk;
-    char *fqdp;
-};
-
-/**
- * The nominal list of file types available from dirent.h entries that will
- * be displayed, in a sensible order.
- */
-char *STAT_HDR[8] = {"Regulr", "Dir", "Link", "Block",
-                     "Char", "FIFO", "Socket", "WhtOut"};
 
 /**
  * The following structs and function declarations enable the linked-list
