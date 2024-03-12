@@ -403,10 +403,10 @@ void blockOutput(dir_list_s *paths, enum action act)
 void csvOutput(dir_list_s *paths, enum action act)
 {
     int          i = 0;
-    int   values[] = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk,
-                      de.d_chr, de.d_fif, de.d_sok, de.d_wht};
+    int   values[] = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk, de.d_chr,
+                      de.d_fif, de.d_sok, de.d_wht, de.d_unk};
     char        *c = malloc(sizeof(char));
-    char *csv_list = malloc(sizeof(STAT_HDR) + 1024);
+    char *csv_list = malloc(sizeof(STAT_CSV) + 1024);
 
     /// Add directory list and header if not in quiet-mode.
     if ( ! opt.qit ) {
@@ -417,7 +417,7 @@ void csvOutput(dir_list_s *paths, enum action act)
         }
 
         for ( i = 0 ; i < de.num_hdr ; ++i ) {
-            asprintf(&csv_list, "%s%s,", csv_list, STAT_HDR[i]);
+            asprintf(&csv_list, "%s%s,", csv_list, STAT_CSV[i]);
         }
         asprintf(&csv_list, "%s\b \n", csv_list); /// Remove trailing comma.
     }
@@ -462,8 +462,8 @@ void printDeco()
 void lineOutput(dir_list_s *paths, enum action act)
 {
     int i        = 0;
-    int values[] = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk,
-                    de.d_chr, de.d_fif, de.d_sok, de.d_wht};
+    int values[] = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk, de.d_chr,
+                    de.d_fif, de.d_sok, de.d_wht, de.d_unk};
 
     if ( act == non ) {
         // stub for continuous output mode, `cnt`
@@ -478,7 +478,7 @@ void lineOutput(dir_list_s *paths, enum action act)
         printf("|");
 
         for ( i = 0 ; i < de.num_hdr ; ++i ) {
-            printf("%7s |", STAT_HDR[i]);
+            printf("%8s |", STAT_HDR[i]);
         }
 
         printf("\n");
@@ -488,7 +488,7 @@ void lineOutput(dir_list_s *paths, enum action act)
     /// Print the values with decoration.
     printf("|");
     for ( i = 0 ; i < de.num_hdr ; ++i ) {
-        printf("%7d |", values[i]);
+        printf("%8d |", values[i]);
     }
     printf("\n");
 

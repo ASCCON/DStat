@@ -89,9 +89,13 @@
  * be displayed, in a sensible order. This, along with `dir_ent_s{}`, below,
  * should be updated to match your target OS/filesystem dirent.h.
  */
-char *STAT_HDR[] = {"Regulr", "Dir", "Link", "Block",
-                    "Char", "FIFO", "Socket", "WhtOut"};
+char *STAT_HDR[] = {"Regular", "Dir", "Link", "Block", "Char",
+                    "FIFO", "Socket", "WhtOut", "Unknown"};
 
+/// Same as above but with names fully written out for CSV output.
+char *STAT_CSV[] = {"Regular", "Directory", "Link", "Block Special",
+                    "Character Special", "FIFO", "Socket", "White Out",
+                    "Unknown"};
 /**
  * This structure holds the variables and pointers for adding dirent.h
  * statistical entries. It can also hold the following optional or
