@@ -641,6 +641,7 @@ int main(int argc, char *argv[])
     dp_name    *dir_path = NULL;
     dir_node_s *dir_node = NULL;
     dir_list_s *dir_list = createDirList();
+    char       *safe_dir = malloc(MAXPATHLEN);
     int          dir_cnt = 0;
 
     /// Loop over all non-option arguments (directory paths or junk data)
@@ -649,7 +650,11 @@ int main(int argc, char *argv[])
           param_index < argc ; ++param_index ) {
         Dprint("loop: %02d: param_index = %d, dir_cnt = %d",
                dir_cnt, param_index, dir_cnt);
-        addDir(dir_list, dir_node, argv[param_index]);
+        asprintf(&safe_dir, "%s", argv[param_index]); /// safe string handling
+        if ( strcmp(CD, safe_dir) == 0 ) {
+            getcwd(safe_dir, sizeof(argv[param_index]));
+        }
+        addDir(dir_list, dir_node, safe_dir);
         ++dir_cnt;
     }
 
