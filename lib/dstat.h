@@ -98,15 +98,15 @@ char *STAT_CSV[] = {"Regular", "Directory", "Link", "Block Special",
                     "Unknown"};
 /**
  * This structure holds the variables and pointers for adding dirent.h
- * statistical entries. It can also hold the following optional or
- * temporary parameters:
- *   - `char *fqdp` : A fully-qualified directory path string for passing
- *                    to the `struct dir_node{}`.
+ * statistical entries. Additional parameters are supported.
  */
 struct dir_ent_s {
     int  d_fif, d_chr, d_dir, d_blk, d_reg, d_lnk, d_sok, d_wht, d_unk;
-    int  num_hdr;
-    char *fqdp;
+    int  num_hdr; /// Number of dirent.h file types.
+    int  num_dir; /// Number of `testDir()` == TRUE directories.
+    char *fqdp;   /// Fully-qualified directory path string for passing to
+                  /// the `struct dir_node{}`.
+
 };
 
 /**
@@ -168,10 +168,11 @@ enum action {
     non = 0, /// tells ay receiving function to ignore this parameter.
     add,     /// `pl()` adds an _s_ to "pluralise" a string.
     rep,     /// `pl()` replaces either a _y_ (singular) or _ies_ (plural)
-    reg,     /// tells receiving functions to print in "regular" format.
-    csv,     /// tells receiving functions to print in "CSV" format.
-    prt,     /// tells receiving functions to _only_ print output to `STDOUT`.
-    wrt      /// tells receiving functions to _only_ write output to `OUTFILE`.
+    reg,     /// tells receiving functions to print in "regular" format
+    csv,     /// tells receiving functions to print in "CSV" format
+    prt,     /// tells receiving functions to _only_ print output to `STDOUT`
+    wrt,     /// tells receiving functions to _only_ write output to `OUTFILE`
+    cnt      /// used to indicate continuous output (e.g `-c` flag)
 };
 
 /**

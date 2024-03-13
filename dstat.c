@@ -48,6 +48,12 @@ const char *PD = "..";
  * CArgs library struct with options and documentation.
  */
 static struct cag_option options[] = {
+    {.identifier = 'c',
+     .access_letters = "c",
+     .access_name = "continuous",
+     .value_name = NULL,
+     .description = "Prints updates as they are retrieved."},
+
     {.identifier = 'L',
      .access_letters = "L",
      .access_name = "linear",
@@ -180,7 +186,8 @@ bool testDir(char *dir)
             Dprint("FQP: %s", de.fqdp);
         }
 
-        Dprint("%s", "TRUE");
+        ++de.num_dir;
+        Dprint("%s %d", "TRUE", de.num_dir);
         return true;
     }
 
@@ -204,7 +211,7 @@ void addDir(dir_list_s *paths, dir_node_s *dir_node, char *path_arg)
         dir_node_s *next = paths->head;
         paths->head = dir_node;
         dir_node->next = next;
-        paths->num_dirs++;
+        ++(paths->num_dirs);
         Dprint("num_dirs: %d", paths->num_dirs);
     } else {
         if ( errno == 0 ) errno = ENOENT;
@@ -465,11 +472,6 @@ void lineOutput(dir_list_s *paths, enum action act)
     int values[] = {de.d_reg, de.d_dir, de.d_lnk, de.d_blk, de.d_chr,
                     de.d_fif, de.d_sok, de.d_wht, de.d_unk};
 
-    if ( act == non ) {
-        // stub for continuous output mode, `cnt`
-        Dprint("%s", "act is non");
-    }
-
     /// Print decoration if not in quiet-mode.
     if ( ! opt.qit ) {
         getDirList(paths, reg);
@@ -485,17 +487,42 @@ void lineOutput(dir_list_s *paths, enum action act)
         printDeco();
     }
 
-    /// Print the values with decoration.
-    printf("|");
-    for ( i = 0 ; i < de.num_hdr ; ++i ) {
-        printf("%8d |", values[i]);
+    if ( act == cnt ) {
+        dir_node_s *cursor = paths->head;
+        i = 0;
+
+        while ( cursor ) {
+            getDirStats(cursor);
+            int values[] = {de.d_reg, de.d_dir, de.d_lnk,
+                            de.d_blk, de.d_chr, de.d_fif,
+                            de.d_sok, de.d_wht, de.d_unk};
+            if ( opt.lin ) {
+                printf("|");
+                for ( i = 0 ; i < de.num_hdr ; ++i ) {
+                    printf("%8d |", values[i]);
+                }
+                printf("\n");
+            } else {
+                printf("\r|");
+                for ( i = 0 ; i < de.num_hdr ; ++i ) {
+                    printf("%8d |", values[i]);
+                }
+            }
+
+            ++i;
+            cursor = cursor->next;
+        }
+    } else {
+        /// Print the values with decoration.
+        printf("|");
+        for ( i = 0 ; i < de.num_hdr ; ++i ) {
+            printf("%8d |", values[i]);
+        }
     }
-    printf("\n");
 
     /// Clean up output decorations.
-    if ( ! opt.qit ) {
-        printDeco();
-    }
+    if ( ! opt.lin ) printf("\n");
+    if ( ! opt.qit ) printDeco();
 }
 
 /**
@@ -504,8 +531,13 @@ void lineOutput(dir_list_s *paths, enum action act)
 int displayOutput(dir_list_s *paths)
 {
     /// Print output as appropriate to `STDOUT`.
-    if ( ( opt.lin && ! opt.csv ) || ( opt.lin && opt.csv && opt.out ) ) {
-        lineOutput(paths, prt);
+    if ( ( opt.upd || ( opt.lin && ! opt.csv ) )
+         || ( opt.lin && opt.csv && opt.out ) ) {
+        if ( opt.upd ) {
+            lineOutput(paths, cnt);
+        } else {
+            lineOutput(paths, prt);
+        }
     } else if ( opt.csv && ! opt.lin && ! opt.out ) {
         csvOutput(paths, prt);
     } else {
@@ -540,6 +572,9 @@ int main(int argc, char *argv[])
 
     while (cag_option_fetch(&context)) {
         switch (cag_option_get_identifier(&context)) {
+        case 'c':
+            opt.upd = true;
+            break;
         case 'L':
             opt.lin = true;
             break;
@@ -623,9 +658,25 @@ int main(int argc, char *argv[])
     Dprint("dir_cnt: %d", dir_cnt);
     if ( dir_cnt == 0 ) {
         addDir(dir_list, dir_node, getcwd(dir_path, MAXPATHLEN));
+        ++dir_cnt;
     }
 
-    getPaths(dir_list);
+    if ( ( dir_cnt != de.num_dir )
+         || ( dir_cnt != dir_list->num_dirs )
+         || ( de.num_dir != dir_list->num_dirs ) ) {
+        Dprint("dir_cnt: %d, de.num_dir: %d, dir_list->num_dirs: %d",
+               dir_cnt, de.num_dir, dir_list->num_dirs);
+        errno = EIO;
+        perror("directory count mismatch");
+        exit(EXIT_FAILURE);
+    } else if ( ( dir_cnt == 1 ) && ( opt.upd ) ) {
+        errno = EINVAL;
+        perror("must specify more than one directory for continuous updates");
+        exit(EXIT_FAILURE);
+    }
+
+    if ( ! opt.upd ) getPaths(dir_list);
+
     displayOutput(dir_list);
     if ( opt.out ) fclose(opt.OUTFILE);
     if ( opt.log ) fclose(opt.LOGFILE);
