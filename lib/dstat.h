@@ -36,6 +36,7 @@
  * Note non-standard github.com:likle/cargs.git
  */
 #include <cargs.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,6 +61,12 @@
 #define _BSD_SOURCE
 
 /**
+ * For some reason, we can figure out the system-specific, but not the generic,
+ * MAXPATHLEN.
+ */
+#define MAXPATHLEN __DARWIN_MAXPATHLEN
+
+/**
  * Set up debug printing.
  */
 #define Dprint(fmt, ...)                                                \
@@ -74,15 +81,15 @@
 #endif
 
 /**
- * "Standard Boolean" library required here for function declarations.
+ * Logging function to print non-fatal errors to opt.logfile or fail
+ * appropriately.
  */
-#include <stdbool.h>
+void logError(bool fail, char *msg);
 
 /**
- * For some reason, we can figure out the system-specific, but not the generic,
- * MAXPATHLEN.
+ * Function to write to output opt.outfile if specified.
  */
-#define MAXPATHLEN __DARWIN_MAXPATHLEN
+void writeOut(char *msg);
 
 /**
  * The nominal list of file types available from dirent.h entries that will

@@ -2,7 +2,7 @@
 title: DSTAT
 section: 1
 header: User Manual
-footer: 0.7.1-pre-release
+footer: 0.7.1-pre-release-1-geec4b9a
 date: Mar 12 2024
 ---
 # NAME
@@ -52,7 +52,7 @@ Any unknown file types (e.g not listed in `sys/dirent.h`) will be counted as
 Multiple directories may be specified (see EXAMPLES). If no directory is
 specified, the current working directory is assumed.
 
-**-c**, **---continuous**
+**-C**, **---continuous**
 : Continuously update `STDOUT` with statistical counts. This helps you look 
 busy whilst sipping at your coffee. Implies `-L` / `--linear` output format.
 Count updates are printed on a single line, updated inline, unless the `-L` /
@@ -64,7 +64,7 @@ Count updates are printed on a single line, updated inline, unless the `-L` /
 statistical data (see EXAMPLES). When explicitly specified with the `-c` /
 `--continuous` option, count updates are printed on new lines.
 
-**-C**, **---csv***
+**-c**, **---csv***
 : Prints CSV-formatted output. With the `-o`/`--output` options (see below),
 writes CSV output to the named output file. Has no effect without `-o` flag
 if either `-c` or `-L` flags are also specified.
@@ -106,7 +106,7 @@ commit ID, author, and date information) and exits.
 : Display combined stats for both the `/data` and `/bigdata` filesystems,
 printing the output to a single line, inline, as it becomes available.
 
-**dstat -c -L -q -o /tmp/dstat.out -l /tmp/dstat.log /bigdata | tee > /tmp/dsatat.csv**
+**dstat -C -L -q -o /tmp/dstat.out -l /tmp/dstat.log /bigdata | tee > /tmp/dsatat.csv**
 : Obviously, this one is  a little more involved. In short, monitor progress
 whilst saving state and not stopping on errant directory names but dutifully
 logging such to the logfile (in this case, `/tmp/dstat.log`). In particular, 

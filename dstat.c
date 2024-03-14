@@ -48,8 +48,8 @@ const char *PD = "..";
  * CArgs library struct with options and documentation.
  */
 static struct cag_option options[] = {
-    {.identifier = 'c',
-     .access_letters = "c",
+    {.identifier = 'C',
+     .access_letters = "C",
      .access_name = "continuous",
      .value_name = NULL,
      .description = "Prints updates as they are retrieved."},
@@ -60,8 +60,8 @@ static struct cag_option options[] = {
      .value_name = NULL,
      .description = "Print linear output rather than block."},
 
-    {.identifier = 'C',
-     .access_letters = "C",
+    {.identifier = 'c',
+     .access_letters = "c",
      .access_name = "csv",
      .value_name = NULL,
      .description = "Output to CSV format."},
@@ -128,6 +128,50 @@ struct dir_ent_s de = {
 };
 
 /**
+ * Function to write to output opt.outfile if specified.
+ */
+void writeOut(char *msg)
+{
+    int tmp = fprintf(opt.OUTFILE, msg, sizeof(msg));
+
+    if ( tmp < 1 ) {
+        Dprint("failed writing to %s...", opt.outfile);
+        logError(true, opt.outfile);
+    }
+}
+
+/**
+ * Logging function to print non-fatal errors to opt.logfile or fail
+ * appropriately.
+ */
+void logError(bool fail, char *msg)
+{
+    char *msg_buffer = malloc(MAXPATHLEN * 2);
+
+    asprintf(&msg_buffer, "%s", msg);
+    if ( errno == 0 ) errno = EPERM;
+    Dprint("errno: %d", errno);
+    asprintf(&msg_buffer, "%s: %s\n", msg_buffer, strerror(errno));
+
+    if ( opt.log ) {
+        int tmp = fprintf(opt.LOGFILE, msg_buffer, sizeof(msg_buffer) < 1);
+        if ( tmp < 1 ) {
+            perror(opt.logfile);
+            free(msg_buffer);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if ( fail || ! opt.log ) {
+        Dprint("%s", msg_buffer);
+        printf("%s", msg_buffer);
+        free(msg_buffer);
+        exit(errno);
+    }
+}
+
+
+/**
  * Initialise the linked-list for storing directory paths.
  */
 dir_list_s *createDirList()
@@ -139,7 +183,7 @@ dir_list_s *createDirList()
         return dir_path;
     } else {
         Dprint("error %d", errno);
-        perror("unable to allocate directory path list");
+        logError(true, "unable to allocate directory path list");
         return NULL;
     }
 }
@@ -157,7 +201,7 @@ dir_node_s *createDirNode(dp_name *dir)
         return new_ent;
     } else {
         Dprint("error %d", errno);
-        perror("unable to allocate directory entry");
+        logError(true, "unable to allocate directory entry");
         return NULL;
     }
 }
@@ -195,7 +239,7 @@ bool testDir(char *dir)
 
     /// If neither of the above conditions holds, `*dir` is not a valid
     /// directory path.
-    Dprint("%s","FALSE");
+    Dprint("%s: %s", dir, "FALSE");
     return false;
 }
 
@@ -215,22 +259,7 @@ void addDir(dir_list_s *paths, dir_node_s *dir_node, char *path_arg)
         Dprint("num_dirs: %d", paths->num_dirs);
     } else {
         if ( errno == 0 ) errno = ENOENT;
-
-        if ( opt.log ) {
-            char *errstring = malloc(MAXPATHLEN + 82);
-            asprintf(&errstring, "%s: %s\n", strerror(errno), path_arg);
-
-            if ( (fprintf(opt.LOGFILE, errstring, sizeof(errstring))) < 1 ) {
-                Dprint("failed logging to %s...", opt.logfile);
-                perror(opt.logfile);
-                exit(EXIT_FAILURE);
-            }
-
-            free(errstring);
-        } else {
-            perror(path_arg);
-            exit(EXIT_FAILURE);
-        }
+        logError(false, path_arg);
     }
 }
 
@@ -271,7 +300,7 @@ void getDirStats(dir_node_s *dir_node)
         }
     } else {
         Dprint("error %d", errno);
-        perror(dir_node->dir);
+        logError(false, dir_node->dir);
     }
 
     (void)closedir(dp);
@@ -319,8 +348,7 @@ void getDirList(dir_list_s *paths, enum action fmt)
             ++i;
         } else {
             errno = EINVAL;
-            perror("fmt: incorrect parameter usage");
-            exit(errno);
+            logError(true, "fmt: incorrect parameter usage");
         }
         cursor = cursor->next;
     }
@@ -389,11 +417,7 @@ void blockOutput(dir_list_s *paths, enum action act)
              pl(&de.d_unk, c, add));
 
     if ( act == wrt ) {
-        if ( (fprintf(opt.OUTFILE, b, sizeof(b))) < 1 ) {
-            Dprint("failed writing to %s...", opt.outfile);
-            perror(opt.outfile);
-            exit(EXIT_FAILURE);
-        }
+        writeOut(b);
     } else {
         printf("%s", b);
     }
@@ -436,11 +460,7 @@ void csvOutput(dir_list_s *paths, enum action act)
     asprintf(&csv_list, "%s\b \n", csv_list); /// Remove trailing comma.
 
     if ( act == wrt ) {
-        if ( (fprintf(opt.OUTFILE, csv_list, sizeof(csv_list))) < 1 ) {
-            Dprint("failed writing to %s...", opt.outfile);
-            perror(opt.outfile);
-            exit(EXIT_FAILURE);
-        }
+        writeOut(csv_list);
     } else {
         printf("%s", csv_list);
     }
@@ -572,13 +592,13 @@ int main(int argc, char *argv[])
 
     while (cag_option_fetch(&context)) {
         switch (cag_option_get_identifier(&context)) {
-        case 'c':
+        case 'C':
             opt.upd = true;
             break;
         case 'L':
             opt.lin = true;
             break;
-        case 'C':
+        case 'c':
             opt.csv = true;
             break;
         case 'q':
@@ -591,13 +611,11 @@ int main(int argc, char *argv[])
                 opt.OUTFILE = fopen(opt.outfile, opt.FILEOPTS);
                 if ( ! opt.OUTFILE ) {
                     Dprint("NULL FILE *opt.outfile: %s", opt.outfile);
-                    perror(opt.outfile);
-                    exit(EXIT_FAILURE);
+                    logError(true, opt.outfile);
                 }
             } else {
                 errno = EINVAL;
-                perror("-o/--outfile must supply valid OUTFILE");
-                exit(EXIT_FAILURE);
+                logError(true, "-o/--outfile must supply valid OUTFILE");
             }
             break;
         case 'l':
@@ -606,14 +624,12 @@ int main(int argc, char *argv[])
                 opt.logfile = (char *)cag_option_get_value(&context);
                 opt.LOGFILE = fopen(opt.logfile, opt.FILEOPTS);
                 if ( ! opt.LOGFILE ) {
-                    Dprint("NULL FILE *opt.logfile: %s", opt.logfile);
-                    perror(opt.logfile);
-                    exit(EXIT_FAILURE);
+                    Dprint("*opt.logfile: %i", opt.LOGFILE->_file);
+                    logError(true, opt.logfile);
                 }
             } else {
                 errno = EINVAL;
-                perror("-L/--logfile must supply valid LOGFILE");
-                exit(EXIT_FAILURE);
+                logError(true, "-l/--logfile must supply valid LOGFILE");
             }
             break;
         case 'v':
@@ -666,18 +682,14 @@ int main(int argc, char *argv[])
         ++dir_cnt;
     }
 
-    if ( ( dir_cnt != de.num_dir )
-         || ( dir_cnt != dir_list->num_dirs )
-         || ( de.num_dir != dir_list->num_dirs ) ) {
+    if ( de.num_dir != dir_list->num_dirs ) {
         Dprint("dir_cnt: %d, de.num_dir: %d, dir_list->num_dirs: %d",
                dir_cnt, de.num_dir, dir_list->num_dirs);
         errno = EIO;
-        perror("directory count mismatch");
-        exit(EXIT_FAILURE);
+        logError(true, "directory count mismatch");
     } else if ( ( dir_cnt == 1 ) && ( opt.upd ) ) {
         errno = EINVAL;
-        perror("must specify more than one directory for continuous updates");
-        exit(EXIT_FAILURE);
+        logError(true, "continuous update requires multiple directories");
     }
 
     if ( ! opt.upd ) getPaths(dir_list);
