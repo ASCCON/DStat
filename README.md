@@ -52,35 +52,35 @@ Any unknown file types (e.g not listed in `sys/dirent.h`) will be counted as
 Multiple directories may be specified (see EXAMPLES). If no directory is
 specified, the current working directory is assumed.
 
-**-C**, **---continuous**
+**-C**, **--continuous**
 : Continuously update `STDOUT` with statistical counts. This helps you look 
 busy whilst sipping at your coffee. Implies `-L` / `--linear` output format.
 Count updates are printed on a single line, updated inline, unless the `-L` /
 `--linear` flag is explicitly called.
 
-**-L**, **---linear**
+**-L**, **--linear**
 : Rather than displaying a descriptive block of text with the stastical data
 (the default output), show a header line followed by a single line of all
 statistical data (see EXAMPLES). When explicitly specified with the `-c` /
 `--continuous` option, count updates are printed on new lines.
 
-**-c**, **---csv**
+**-c**, **--csv**
 : Prints CSV-formatted output. With the `-o`/`--output` options (see below),
 writes CSV output to the named output file. Has no effect without `-o` flag
 if either `-c` or `-L` flags are also specified.
 
-**-q**, **---quiet**
+**-q**, **--quiet**
 : Do not print the directory list in default output ("block") mode. With
 `-c`, `-C`, and/or `-L` flags, only prints the accumulated statistical counts
 without directory or header lines.
 
-**-o**, **---outfile** [*OUTFILE*]
+**-o**, **--outfile** [*OUTFILE*]
 : Send the default output to the named `[OUTFILE]`. Note that this flag may
 be used _in addition_ to aforementioned output format- control flags; this
 implies opening `[OUTFILE]` on start, final population of `[OUTFILE]` prior to
 termination, and output to `STDOUT` following the output format flags.
 
-**-l**, **---logfile** [*LOGFILE*]
+**-l**, **--logfile** [*LOGFILE*]
 : Similar to the `-o` / `--outfile` flag, send error data to the named
 `[LOGFILE]`. The main difference with specifying the `-l` / `--logfile` option 
 is that any directory/ies that are not valid or cannot be examined (e.g 
@@ -88,21 +88,21 @@ because of permissions errors) are simply logged to `[LOGFILE]` and program
 execution continues. Normally, any directory access errors, along with all 
 other errors, will cause the program to halt. 
 
-**-v**, **---version**
+**-v**, **--version**
 : Prints the current software revision and exits.
 
-**-V**, **---Version**
+**-V**, **--Version**
 : Prints verbose software release information (including version tag, Git
 commit ID, author, and date information) and exits.
 
-**-h**, **---help**
+**-h**, **--help**
 : Display a short help message with usage information.
 
 # EXAMPLES
 **dstat**
 : Prints directory statistics for the current working directory.
 
-**dstat ---continuous /data /bigdata**
+**dstat --continuous /data /bigdata**
 : Display combined stats for both the `/data` and `/bigdata` filesystems,
 printing the output to a single line, inline, as it becomes available.
 
@@ -114,15 +114,15 @@ continuously follow the output (via `STDOUT`) for scanning the `/data` and
 `/bigdata` directories. Summary output is sent to an output file, here
 `/tmp/dstat.out`.
 
-**dstat ---linear ---csv ---outfile=/tmp/outfile.csv /bigdata**
+**dstat --linear --csv --outfile=/tmp/outfile.csv /bigdata**
 : Print statistics for the `/bigdata` filesystem as a formatted line to
 `stdout` with the same information written to `/tmp/outfile.csv` in CSV format.
 
-**dstat ---quiet ---csv ---outfile=/tmp/outfile.csv /bigdata**
+**dstat --quiet --csv --outfile=/tmp/outfile.csv /bigdata**
 : Update the `/tmp/outfile.csv` output file with the latest statistics from the
 `/bigdata` filesystem.
 
-**dstat ---logfile=/dev/null /data /bigdata**
+**dstat --logfile=/dev/null /data /bigdata**
 : Print statistics on the `/data` and `/bigdata` filesystems ignoring any non-
 fatal errors.
 
