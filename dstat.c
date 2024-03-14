@@ -207,6 +207,32 @@ dir_node_s *createDirNode(dp_name *dir)
 }
 
 /**
+ * Check nodes on linked-list for uniqueness.
+ */
+void checkUniqueDirs(dir_list_s *dir_list)
+{
+    dir_node_s *cursor = dir_list->head;
+    char        *dir[] = {NULL};
+    char          *msg = malloc(MAXPATHLEN + 24);
+    int       i = 0, j = 0;
+
+    for ( i = 0 ; i < dir_list->num_dirs ; ++i ) {
+        dir[i] = cursor->dir;
+        Dprint("dir[%d]: %s", i, dir[i]);
+        cursor = cursor->next;
+    }
+
+    for ( i = 0 ; i < dir_list->num_dirs ; ++i ) {
+        for ( j = 0 ; j < dir_list->num_dirs ; ++j ) {
+            if ( (strcmp(dir[i], dir[j]) == 0 ) && ( i != j ) ) {
+                asprintf(&msg, "%s: directory not unique", dir[i]);
+                logError(true, msg);
+            }
+        }
+    }
+}
+
+/**
  * Test directory, identified by pointer to const char, prior to further action.
  */
 bool testDir(char *dir)
@@ -309,7 +335,7 @@ void getDirStats(dir_node_s *dir_node)
 /**
  * Get a list of the directory path entries in the linked-list.
  */
-void getPaths(dir_list_s *paths)
+void getAllStats(dir_list_s *paths)
 {
     dir_node_s *cursor = paths->head;
 
@@ -692,9 +718,11 @@ int main(int argc, char *argv[])
         logError(true, "continuous update requires multiple directories");
     }
 
-    if ( ! opt.upd ) getPaths(dir_list);
+    if ( dir_cnt > 1 ) checkUniqueDirs(dir_list);
+    if ( !   opt.upd ) getAllStats(dir_list);
 
     displayOutput(dir_list);
+
     if ( opt.out ) fclose(opt.OUTFILE);
     if ( opt.log ) fclose(opt.LOGFILE);
     exit(errno);

@@ -153,17 +153,20 @@ typedef struct {
     int        num_dirs;
 } dir_list_s;
 
+/// Initialise the linked-list in main().
+dir_list_s *createDirList();
+
 /// Initialise a node on the linked-list.
 dir_node_s *createDirNode(dp_name *dir);
 
-/// Initialise the linked-list in main().
-dir_list_s *createDirList();
+/// Check nodes on linked-list for uniqueness.
+void checkUniqueDirs(dir_list_s *dir_list);
 
 /// Add a directory entry to the linked-list.
 void addDir(dir_list_s *paths, dir_node_s *dir_node, char *path_arg);
 
 /// Traverse the linked-list to populate dir_ent_s{}.
-void getPaths(dir_list_s *paths);
+void getAllStats(dir_list_s *paths);
 
 /// Add the stats from a node entry (directory path) to the linked-list.
 void getDirStats(dir_node_s *dir_node);
