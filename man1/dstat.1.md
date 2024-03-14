@@ -2,7 +2,7 @@
 title: DSTAT
 section: 1
 header: User Manual
-footer: 0.8.0-pre-release-1-g35e213c
+footer: 0.8.0-pre-release-3-ge52e0f0
 date: Mar 14 2024
 ---
 # NAME
@@ -67,7 +67,7 @@ statistical data (see EXAMPLES). When explicitly specified with the `-c` /
 **-c**, **---csv**
 : Prints CSV-formatted output. With the `-o`/`--output` options (see below),
 writes CSV output to the named output file. Has no effect without `-o` flag
-if either `-c` or `-L` flags are also specified.
+if either `-C` or `-L` flags are also specified.
 
 **-q**, **---quiet**
 : Do not print the directory list in default output ("block") mode. With
