@@ -2,7 +2,7 @@
 title: DSTAT
 section: 1
 header: User Manual
-footer: 0.8.0-pre-release
+footer: 0.8.0-pre-release-1-g35e213c
 date: Mar 14 2024
 ---
 # NAME
@@ -64,7 +64,7 @@ Count updates are printed on a single line, updated inline, unless the `-L` /
 statistical data (see EXAMPLES). When explicitly specified with the `-c` /
 `--continuous` option, count updates are printed on new lines.
 
-**-c**, **---csv***
+**-c**, **---csv**
 : Prints CSV-formatted output. With the `-o`/`--output` options (see below),
 writes CSV output to the named output file. Has no effect without `-o` flag
 if either `-c` or `-L` flags are also specified.
@@ -106,22 +106,23 @@ commit ID, author, and date information) and exits.
 : Display combined stats for both the `/data` and `/bigdata` filesystems,
 printing the output to a single line, inline, as it becomes available.
 
-**dstat -C -L -q -o /tmp/dstat.out -l /tmp/dstat.log /bigdata | tee > /tmp/dsatat.csv**
+**dstat -C -L -q -o /tmp/dstat.out -l /tmp/dstat.log /data /bigdata | tee > /tmp/dsatat.csv**
 : Obviously, this one is  a little more involved. In short, monitor progress
 whilst saving state and not stopping on errant directory names but dutifully
 logging such to the logfile (in this case, `/tmp/dstat.log`). In particular, 
-continuously follow the output (via `STDOUT`) for scanning the `/bigdata`
-directory. Summary output is sent to an output file, here `/tmp/dstat.out`.
+continuously follow the output (via `STDOUT`) for scanning the `/data` and
+`/bigdata` directories. Summary output is sent to an output file, here
+`/tmp/dstat.out`.
 
-**dstat --linear --csv --outfile=/tmp/outfile.csv /bigdata**
+**dstat ---linear ---csv ---outfile=/tmp/outfile.csv /bigdata**
 : Print statistics for the `/bigdata` filesystem as a formatted line to
 `stdout` with the same information written to `/tmp/outfile.csv` in CSV format.
 
-**dstat --quiet --csv --outfile=/tmp/outfile.csv /bigdata**
+**dstat ---quiet ---csv ---outfile=/tmp/outfile.csv /bigdata**
 : Update the `/tmp/outfile.csv` output file with the latest statistics from the
 `/bigdata` filesystem.
 
-**dstat ---logfile /dev/null /data /bigdata**
+**dstat ---logfile=/dev/null /data /bigdata**
 : Print statistics on the `/data` and `/bigdata` filesystems ignoring any non-
 fatal errors.
 
