@@ -212,21 +212,20 @@ dir_node_s *createDirNode(dp_name *dir)
 void checkUniqueDirs(dir_list_s *dir_list)
 {
     dir_node_s *cursor = dir_list->head;
-    char    *dir[1024] = {NULL}; // hakhakhak /facepalm
     char          *msg = malloc(MAXPATHLEN + 24);
     int       i = 0, j = 0;
 
     for ( i = 0 ; i < dir_list->num_dirs ; ++i ) {
-        dir[i] = cursor->dir;
-        Dprint("dir[%d]: %s", i, dir[i]);
+        opt.list[i] = cursor->dir;
+        Dprint("opt.list[%d]: %s", i, opt.list[i]);
         cursor = cursor->next;
     }
 
     for ( i = 0 ; i < dir_list->num_dirs ; ++i ) {
         for ( j = i + 1 ; j < dir_list->num_dirs ; ++j ) {
-            if ( strncmp(dir[i], dir[j], MAXPATHLEN) == 0 ) {
-                asprintf(&msg, "%s: directory not unique", dir[i]);
-                Dprint("%s==%s: %s", dir[i], dir[j], msg);
+            if ( strncmp(opt.list[i], opt.list[j], MAXPATHLEN) == 0 ) {
+                asprintf(&msg, "%s: directory not unique", opt.list[i]);
+                Dprint("%s==%s: %s", opt.list[i], opt.list[j], msg);
                 logError(true, msg);
             }
         }
