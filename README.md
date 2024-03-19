@@ -2,7 +2,7 @@
 title: DSTAT
 section: 1
 header: User Manual
-footer: 0.8.1-pre-release
+footer: 0.8.1-pre-release-1-g55b047d
 date: Mar 18 2024
 ---
 # NAME
@@ -61,7 +61,7 @@ Count updates are printed on a single line, updated inline, unless the `-L` /
 **-L**, **---linear**
 : Rather than displaying a descriptive block of text with the stastical data
 (the default output), show a header line followed by a single line of all
-statistical data (see EXAMPLES). When explicitly specified with the `-c` /
+statistical data (see EXAMPLES). When explicitly specified with the `-C` /
 `--continuous` option, count updates are printed on new lines.
 
 **-c**, **---csv**
