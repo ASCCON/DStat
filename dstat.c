@@ -212,7 +212,7 @@ dir_node_s *createDirNode(dp_name *dir)
 void checkUniqueDirs(dir_list_s *dir_list)
 {
     dir_node_s *cursor = dir_list->head;
-    char        *dir[] = {NULL};
+    char    *dir[1024] = {NULL}; // hakhakhak /facepalm
     char          *msg = malloc(MAXPATHLEN + 24);
     int       i = 0, j = 0;
 
@@ -223,13 +223,16 @@ void checkUniqueDirs(dir_list_s *dir_list)
     }
 
     for ( i = 0 ; i < dir_list->num_dirs ; ++i ) {
-        for ( j = 0 ; j < dir_list->num_dirs ; ++j ) {
-            if ( (strcmp(dir[i], dir[j]) == 0 ) && ( i != j ) ) {
+        for ( j = i + 1 ; j < dir_list->num_dirs ; ++j ) {
+            if ( strncmp(dir[i], dir[j], MAXPATHLEN) == 0 ) {
                 asprintf(&msg, "%s: directory not unique", dir[i]);
+                Dprint("%s==%s: %s", dir[i], dir[j], msg);
                 logError(true, msg);
             }
         }
     }
+
+    free(msg);
 }
 
 /**
@@ -567,7 +570,7 @@ void lineOutput(dir_list_s *paths, enum action act)
     }
 
     /// Clean up output decorations.
-    if ( ! opt.lin ) printf("\n");
+    if ( ( opt.upd && ! opt.lin ) || ( opt.lin && ! opt.upd ) ) printf("\n");
     if ( ! opt.qit ) printDeco();
 }
 
