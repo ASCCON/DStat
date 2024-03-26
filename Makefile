@@ -73,7 +73,7 @@ $(MANPAGE):
 $(TARGET):
 	$(CC) $(CFLAGS) $(LDFLAGS) $(WFLAGS) $(OFLAGS) $(TARGET) $(SOURCE)
 
-all: $(VERSION) $(TARGET) $(MANPAGE)
+all: $(VERSION) $(MANPAGE) $(TARGET)
 
 install:
 	install $(TARGET) /usr/local/bin/
