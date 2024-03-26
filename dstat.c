@@ -580,13 +580,13 @@ int displayOutput(dir_list_s *paths)
 {
     /// Print output as appropriate to `STDOUT`.
     if ( ( opt.upd || ( opt.lin && ! opt.csv ) )
-         || ( opt.lin && opt.csv && opt.out ) ) {
+         || ( opt.lin && opt.csv ) ) {
         if ( opt.upd ) {
             lineOutput(paths, cnt);
         } else {
             lineOutput(paths, prt);
         }
-    } else if ( opt.csv && ! opt.lin && ! opt.out ) {
+    } else if ( ( opt.csv ) && ( ! opt.lin ) && ( ! opt.out ) ) {
         csvOutput(paths, prt);
     } else {
         blockOutput(paths, prt);
