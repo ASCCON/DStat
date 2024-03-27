@@ -8,9 +8,9 @@ SOURCE := $(NAME).c
 
 TARGET := $(NAME)
 
-MANPAGE := man1/$(TARGET).1
+MANPAGE := docs/man1/$(TARGET).1
 
-MANSRC := man1/$(TARGET).1.md
+MANSRC := docs/man1/$(TARGET).1.md
 
 VERSION := lib/version.h
 
@@ -64,7 +64,7 @@ manpage: $(MANPAGE)
 $(MANPAGE):
 	$(shell sed -i.bak -e "s/^footer: .*/footer: $(TAG)/g" $(MANSRC))
 	$(shell sed -i.bak -e "s/^date: .*/date: $(DATEFMT)/g" $(MANSRC))
-	$(PD) man1/$(TARGET).1.md -s -t man -o $(MANPAGE)
+	$(PD) docs/man1/$(TARGET).1.md -s -t man -o $(MANPAGE)
 	cp $(MANSRC) README.md
 	$(shell sed -i.bak -e "s/\*\*---/\*\*--/g" README.md)
 	rm -f README.md.bak
@@ -77,7 +77,7 @@ all: $(VERSION) $(MANPAGE) $(TARGET)
 
 install:
 	install $(TARGET) /usr/local/bin/
-	install man1/$(MANPAGE) /usr/local/man/man1/
+	install docs/man1/$(MANPAGE) /usr/local/man/man1/
 
 # Don't get confused by any files actually named, 'clean'.
 .PHONY: clean

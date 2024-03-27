@@ -1,0 +1,3 @@
+[submodule "docs/docs/wiki/DStat.wiki"]
+	path = docs/docs/wiki/DStat.wiki
+	url = https://github.com/ASCCON/DStat.wiki.git
