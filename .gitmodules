@@ -1,6 +1,2 @@
-[submodule "docs/docs/wiki/DStat.wiki"]
-	path = docs/docs/wiki/DStat.wiki
-	url = git@github.com/ASCCON/DStat.wiki.git
-	#url = https://github.com/ASCCON/DStat.wiki.git
 [submodule "docs/wiki/DStat.wiki"]
 	url = git@github.com/ASCCON/DStat.wiki.git
